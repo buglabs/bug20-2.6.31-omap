@@ -50,7 +50,6 @@ isp_video_remote_subdev(struct isp_video *video, u32 *pad)
 		*pad = remote->index;
 
 	return media_entity_to_v4l2_subdev(remote->entity);
-
 }
 
 /* Return a pointer to the ISP video instance at the far end of the pipeline. */
@@ -815,8 +814,10 @@ isp_video_streamon(struct file *file, void *fh, enum v4l2_buf_type type)
 		return -EBUSY;
 	}
 
-	video->queue = &vfh->queue;
-	INIT_LIST_HEAD(&video->dmaqueue);
+	/* Lock the pipeline. No link touching an entity in the pipeline can
+	 * be activated or deactivated once the pipeline is locked.
+	 */
+	media_entity_graph_lock(&video->video.entity);
 
 	/* Verify that the currently configured format matches the output of
 	 * the connected subdev.
@@ -829,7 +830,6 @@ isp_video_streamon(struct file *file, void *fh, enum v4l2_buf_type type)
 
 	/* Find the ISP video node connected at the far end of the pipeline. */
 	far_end = isp_video_far_end(video);
-	atomic_set(&video->sequence, -1);
 
 	/* Update the pipeline state. */
 	if (video->type == V4L2_BUF_TYPE_VIDEO_CAPTURE) {
@@ -864,6 +864,10 @@ isp_video_streamon(struct file *file, void *fh, enum v4l2_buf_type type)
 	 */
 	omap_pm_set_min_bus_tput(video->isp->dev, OCP_INITIATOR_AGENT, 740000);
 
+	video->queue = &vfh->queue;
+	INIT_LIST_HEAD(&video->dmaqueue);
+	atomic_set(&video->sequence, -1);
+
 	ret = isp_video_queue_streamon(&vfh->queue);
 	if (ret < 0)
 		goto error;
@@ -884,6 +888,7 @@ error:
 		isp_video_queue_streamoff(&vfh->queue);
 		omap_pm_set_min_bus_tput(video->isp->dev,
 					 OCP_INITIATOR_AGENT, 0);
+		media_entity_graph_unlock(&video->video.entity);
 		video->pipe = NULL;
 		video->queue = NULL;
 	}
@@ -906,6 +911,7 @@ isp_video_streamoff(struct file *file, void *fh, enum v4l2_buf_type type)
 
 	mutex_lock(&video->stream_lock);
 
+	/* Make sure we're not streaming yet. */
 	mutex_lock(&vfh->queue.lock);
 	streaming = vfh->queue.streaming;
 	mutex_unlock(&vfh->queue.lock);
@@ -934,6 +940,7 @@ isp_video_streamoff(struct file *file, void *fh, enum v4l2_buf_type type)
 	video->queue = NULL;
 
 	omap_pm_set_min_bus_tput(video->isp->dev, OCP_INITIATOR_AGENT, 0);
+	media_entity_graph_unlock(&video->video.entity);
 
 done:
 	mutex_unlock(&video->stream_lock);
