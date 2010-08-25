@@ -19,6 +19,7 @@
 #define __LINUX_V4L2_SUBDEV_H
 
 #include <linux/ioctl.h>
+#include <linux/types.h>
 #include <linux/v4l2-mediabus.h>
 
 enum v4l2_subdev_format {
