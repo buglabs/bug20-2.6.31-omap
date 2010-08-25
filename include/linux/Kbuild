@@ -162,6 +162,7 @@ header-y += udf_fs_i.h
 header-y += ultrasound.h
 header-y += un.h
 header-y += utime.h
+header-y += v4l2-mediabus.h
 header-y += v4l2-subdev.h
 header-y += veth.h
 header-y += videotext.h
