@@ -455,10 +455,10 @@ static void lbtf_op_remove_interface(struct ieee80211_hw *hw,
 {
 	struct lbtf_private *priv = hw->priv;
 	lbtf_deb_enter(LBTF_DEB_MACOPS);
-
-	if (priv->vif->type == NL80211_IFTYPE_AP ||
-	    priv->vif->type == NL80211_IFTYPE_MESH_POINT)
-		lbtf_beacon_ctrl(priv, 0, 0);
+	if (priv->vif)
+		if (priv->vif->type == NL80211_IFTYPE_AP ||
+		    priv->vif->type == NL80211_IFTYPE_MESH_POINT)
+			lbtf_beacon_ctrl(priv, 0, 0);
 	lbtf_set_mode(priv, LBTF_PASSIVE_MODE);
 	lbtf_set_bssid(priv, 0, NULL);
 	priv->vif = NULL;
