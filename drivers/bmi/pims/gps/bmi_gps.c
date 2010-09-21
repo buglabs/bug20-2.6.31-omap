@@ -104,9 +104,11 @@ static int ReadByte_IOX (struct i2c_client *client, unsigned char offset, unsign
 	ret = i2c_master_send(client, &offset, 1);
 	if (ret == 1)
 	  ret = i2c_master_recv(client, data, 1);
-	if (ret < 0)
+	if (ret < 0) {
 	  printk (KERN_ERR "ReadByte_IOX() - i2c_transfer() failed...%d\n",ret);
-	return ret;
+	  return ret;
+	}
+	return 0;
 }
 
 // write byte to I2C IO expander
@@ -119,10 +121,12 @@ static int WriteByte_IOX (struct i2c_client *client, unsigned char offset, unsig
 	msg[1] = data;
 	ret = i2c_master_send(client, msg, sizeof(msg));
 	
-	if (ret < 0)
+	if (ret < 0) {
 	  printk (KERN_ERR "WriteByte_IOX() - i2c_transfer() failed...%d\n",ret);
+	  return ret;
+	}
 
-	return ret;
+	return 0;
 }
 
 
@@ -265,21 +269,27 @@ int cntl_ioctl(struct inode *inode, struct file *file, unsigned int cmd,
 		break;
 
 	case BMI_GPS_ACTIVE_ANT :
+		{
+		printk(KERN_INFO "bmi_gps: ACTIVE_ANT Called\n");
 		if(ReadByte_IOX (gps->iox, IOX_OUTPUT_REG, &iox_data))
 			return -ENODEV;
 		iox_data &= ~0x40;
 		iox_data |=  0x80;
 		if(WriteByte_IOX (gps->iox, IOX_OUTPUT_REG, iox_data))
 			return -ENODEV;
+		printk(KERN_INFO "bmi_gps: ACTIVE_ANT Success\n");
+		}
 		break;
 
 	case BMI_GPS_PASSIVE_ANT:
+		{
 		if(ReadByte_IOX (gps->iox, IOX_OUTPUT_REG, &iox_data))
 			return -ENODEV;
 		iox_data &= ~0x80;
 		iox_data |=  0x40;
 		if(WriteByte_IOX (gps->iox, IOX_OUTPUT_REG, iox_data))
 			return -ENODEV;
+		}
 		break;
 
 	default:
