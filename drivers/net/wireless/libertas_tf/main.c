@@ -428,6 +428,7 @@ static int lbtf_op_add_interface(struct ieee80211_hw *hw,
 	switch (conf->type) {
 	case NL80211_IFTYPE_MESH_POINT:
 	case NL80211_IFTYPE_AP:
+	case NL80211_IFTYPE_ADHOC:
 		lbtf_set_mode(priv, LBTF_AP_MODE);
 		break;
 	case NL80211_IFTYPE_STATION:
@@ -484,6 +485,7 @@ static u64 lbtf_op_prepare_multicast(struct ieee80211_hw *hw,
 {
 	struct lbtf_private *priv = hw->priv;
 	int i;
+	lbtf_deb_enter(LBTF_DEB_MACOPS);
 
 	if (!mc_count || mc_count > MRVDRV_MAX_MULTICAST_LIST_SIZE)
 		return mc_count;
@@ -496,7 +498,7 @@ static u64 lbtf_op_prepare_multicast(struct ieee80211_hw *hw,
 				ETH_ALEN);
 		mclist = mclist->next;
 	}
-
+	lbtf_deb_leave_args(LBTF_DEB_MACOPS, "count: %d", mc_count);
 	return mc_count;
 }
 
@@ -517,9 +519,12 @@ static void lbtf_op_configure_filter(struct ieee80211_hw *hw,
 	*new_flags &= SUPPORTED_FIF_FLAGS;
 
 	if (!changed_flags) {
+		lbtf_deb_macops("no flags changed");
 		lbtf_deb_leave(LBTF_DEB_MACOPS);
 		return;
 	}
+
+	lbtf_deb_macops("New flags 0x%x", *new_flags);
 
 	if (*new_flags & (FIF_PROMISC_IN_BSS))
 		priv->mac_control |= CMD_ACT_MAC_PROMISCUOUS_ENABLE;
@@ -579,7 +584,6 @@ static void lbtf_op_bss_info_changed(struct ieee80211_hw *hw,
 				kfree_skb(beacon);
 				priv->beacon_enable = bss_conf->enable_beacon;
 				priv->beacon_int = bss_conf->beacon_int;
-				lbtf_set_bssid(priv, 1, bss_conf->bssid);
 				lbtf_beacon_ctrl(priv, bss_conf->enable_beacon,
 						 bss_conf->beacon_int);
 			}
