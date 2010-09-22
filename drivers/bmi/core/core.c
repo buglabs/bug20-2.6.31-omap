@@ -255,9 +255,7 @@ static void bmi_device_shutdown(struct device * dev)
 
 static int bmi_device_suspend (struct device * dev, pm_message_t state) 
 {
-	struct bmi_device *bdev = to_bmi_device(dev);
 	struct dev_pm_ops *pm = dev->driver ? dev->driver->pm : NULL;
-	int ret;
 
 	printk(KERN_INFO "BMI: Bus suspend..\n");
 
@@ -271,16 +269,6 @@ static int bmi_device_suspend (struct device * dev, pm_message_t state)
 	}
 
 	return 0;
-}
-
-static int bmi_device_suspend_late (struct device * dev, pm_message_t state)
-{
-  return 0;
-}
-
-static int bmi_device_resume_early (struct device * dev)
-{
-  return 0;
 }
 
 static int bmi_device_resume (struct device * dev)
@@ -298,8 +286,6 @@ struct bus_type bmi_bus_type = {
 	.shutdown = bmi_device_shutdown,
 	.suspend  = bmi_device_suspend,
 	.dev_attrs = bmi_dev_attrs,
-	//.suspend_late = bmi_device_suspend_late,
-	//.resume_early = bmi_device_resume_early,
 	.resume = bmi_device_resume,
 	.pm	= &bmi_dev_pm_ops,
 };

@@ -24,9 +24,7 @@ static void bmi_pm_complete(struct device *dev)
 
 static int bmi_pm_suspend (struct device * dev) 
 {
-	struct bmi_device *bdev = to_bmi_device(dev);
 	struct dev_pm_ops *pm = dev->driver ? dev->driver->pm : NULL;
-	int ret;
 
 	printk(KERN_INFO "BMI: Bus suspend..\n");
 	if (!pm)

@@ -18,6 +18,7 @@
 #define GPIO_1		1
 #define GPIO_0		0
 
+extern struct dev_pm_ops bmi_dev_pm_ops;
 extern struct device_attribute bmi_dev_attrs[];
 struct bmi_slot;
 

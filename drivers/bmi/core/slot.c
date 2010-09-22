@@ -19,22 +19,6 @@
 static DEFINE_MUTEX(slot_lock);
 static DEFINE_IDR(bmi_slot_idr);
 
-
-//#include "slot.h"
-
-/*
-struct slot_driver {
-  const char *description;
-
-  irq_return_t	(*irq) (struct bmi_slot);
-  int	(*start) (struct bmi_slot);
-  int	(*stop) (struct bmi_slot);
-}
-*/
-
-static struct task_struct *kslotd_task;
-  
-static DEFINE_SPINLOCK(slot_event_lock);
 static LIST_HEAD(slot_event_list);
 static DECLARE_WAIT_QUEUE_HEAD(kslotd_wait);
 
