@@ -24,12 +24,14 @@ static void bmi_pm_complete(struct device *dev)
 
 static int bmi_pm_suspend (struct device * dev) 
 {
-	struct dev_pm_ops *pm = dev->driver ? dev->driver->pm : NULL;
+	struct dev_pm_ops *pm;
+	struct bmi_device *bmi_dev;
+
+	pm = dev->driver ? dev->driver->pm : NULL;
+	bmi_dev = to_bmi_device(dev);
 
 	printk(KERN_INFO "BMI: Bus suspend..\n");
-	if (!pm)
-		return 0;
-	if (pm->suspend) {
+	if (pm && pm->suspend) {
 		int error;
 
 		error = pm->suspend(dev);
@@ -38,13 +40,27 @@ static int bmi_pm_suspend (struct device * dev)
 			return error;
 	}
 
+	bmi_slot_power_off(bmi_dev->slot->slotnum);
+
 	return 0;
 }
 
 static int bmi_pm_resume (struct device * dev) 
-{
+{	
+	struct dev_pm_ops *pm;
+	struct bmi_device *bmi_dev;
+	int error = 0;
+
+	pm = dev->driver ? dev->driver->pm : NULL;
+	bmi_dev = to_bmi_device(dev);
+
+	if (pm && pm->resume) {
+		error = pm->resume(dev);
+	}
+	
 	printk(KERN_INFO "BMI: Bus resume..\n");
-	return 0;
+	bmi_slot_power_on(bmi_dev->slot->slotnum);
+	return error;
 }
 
 struct dev_pm_ops bmi_dev_pm_ops = {

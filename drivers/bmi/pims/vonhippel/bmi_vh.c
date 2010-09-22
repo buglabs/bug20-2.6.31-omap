@@ -108,6 +108,14 @@ MODULE_DEVICE_TABLE(bmi, bmi_vh_tbl);
 
 int	bmi_vh_probe (struct bmi_device *bdev);
 void	bmi_vh_remove (struct bmi_device *bdev);
+int	bmi_vh_resume (struct device *dev);
+int	bmi_vh_suspend (struct device *dev);
+
+static struct dev_pm_ops bmi_vh_pm =
+{
+	.resume = bmi_vh_resume,
+	.suspend = bmi_vh_suspend,
+};
 
 // BMI driver structure
 static struct bmi_driver bmi_vh_driver = 
@@ -116,6 +124,7 @@ static struct bmi_driver bmi_vh_driver =
 	.id_table = bmi_vh_tbl, 
 	.probe   = bmi_vh_probe, 
 	.remove  = bmi_vh_remove, 
+	.pm  = &bmi_vh_pm,
 };
 
 /*
@@ -540,7 +549,12 @@ int cntl_ioctl(struct inode *inode, struct file *file, unsigned int cmd,
 		}
 
 		break;
-
+	case BMI_VH_SUSPEND:
+		vh->bdev->dev.bus->pm->suspend(&vh->bdev->dev);
+		break;
+	case BMI_VH_RESUME:
+		vh->bdev->dev.bus->pm->resume(&vh->bdev->dev);
+		break;
 	default:
 		return -ENOTTY;
 	}
@@ -882,6 +896,34 @@ void bmi_vh_remove(struct bmi_device *bdev)
 }
 
 /*
+ *	PM routines
+ */
+
+int bmi_vh_resume(struct device *dev)
+{
+	struct bmi_device *bmi_dev;
+
+	bmi_dev = to_bmi_device(dev);
+
+	printk(KERN_INFO "bmi_vh: Resume..\n");
+	bmi_slot_uart_enable(bmi_dev->slot->slotnum);
+	bmi_slot_spi_enable(bmi_dev->slot->slotnum);
+	return 0;
+}
+
+int bmi_vh_suspend(struct device *dev)
+{
+	struct bmi_device *bmi_dev;
+
+	bmi_dev = to_bmi_device(dev);
+
+	printk(KERN_INFO "bmi_vh: Suspend..\n");
+	bmi_slot_uart_disable(bmi_dev->slot->slotnum);
+	bmi_slot_spi_disable(bmi_dev->slot->slotnum);
+	return 0;
+}
+
+/*
  *	module routines
  */
 
@@ -928,12 +970,6 @@ static int __init bmi_vh_init(void)
 
 module_init(bmi_vh_init);
 module_exit(bmi_vh_cleanup);
-
-module_param(factory_test, ushort, S_IRUGO);
-MODULE_PARM_DESC(factory_test, "Factory Test code enable");
-
-module_param(fcc_test, ushort, S_IRUGO);
-MODULE_PARM_DESC(fcc_test, "FCC Test code enable");
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Buglabs Inc.");

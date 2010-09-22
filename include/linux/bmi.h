@@ -121,6 +121,7 @@ struct bmi_driver {
 	struct device_driver  driver;
 	int  (*probe)(struct bmi_device *dev);
 	void (*remove)(struct bmi_device *dev);
+	struct dev_pm_ops* pm;
 };
 
 extern struct bus_type bmi_bus_type;

@@ -8,7 +8,7 @@ int __bmi_register_driver(struct bmi_driver *drv, struct module *owner)
 	drv->driver.name = drv->name;
 	drv->driver.bus = &bmi_bus_type;
 	drv->driver.owner = owner;
-
+	drv->driver.pm = drv->pm;
 	/* register with core */
 	error = driver_register(&drv->driver);
 
