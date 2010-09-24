@@ -756,7 +756,7 @@ static int if_sdio_prog_firmware(struct if_sdio_card *card)
 	if (scratch == IF_SDIO_FIRMWARE_OK) {
 		lbtf_deb_sdio("firmware already loaded\n");
 		goto success;
-	} else if ((card->model == IF_SDIO_MODEL_8686) && (scratch > 0)) {
+	} else if ((card->model == IF_SDIO_MODEL_8686) && ((scratch & 0x7fff) != 0)) {
 		lbtf_deb_sdio("firmware may be running\n");
 		if( lbtf_reset_fw == 0 ) {
 			goto success;
@@ -971,7 +971,7 @@ int if_sdio_update_hw_spec(struct if_sdio_card *card)
 	if (ret) {
 		goto out;
 	}
-	
+	flush_workqueue(card->workqueue);
 	schedule();
 	msleep(10);
 	/* Wait for and retrieve response */
