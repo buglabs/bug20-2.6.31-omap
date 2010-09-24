@@ -40,6 +40,7 @@
 #include <linux/bmi/bmi_lcd.h>
 #include <mach/display.h>
 #include <linux/fb.h>
+#include <linux/pm.h>
 
 /*
  * 	Global variables
@@ -94,8 +95,46 @@ struct bmi_lcd
 };
 
 struct bmi_lcd bmi_lcd;
-
 static int major;	// control device major
+
+/*
+ *      sysfs interface
+ */
+
+static ssize_t bmi_lcd_suspend_show(struct device *dev, 
+				    struct device_attribute *attr, char *buf)
+{
+    int len = 0;
+    struct bmi_lcd *lcd = dev_get_drvdata(dev);
+
+    int status = lcd->bdev->dev.power.status;
+    
+    if (status == DPM_ON)
+      len += sprintf(buf+len, "0");      
+    else
+      len += sprintf(buf+len, "1");      
+    
+    len += sprintf(len+buf, "\n");
+    return len;
+}
+	
+static ssize_t bmi_lcd_suspend_store(struct device *dev,
+			  struct device_attribute *attr,
+			  const char *buf, size_t len)
+{
+    struct bmi_lcd *lcd = dev_get_drvdata(dev);
+
+    if (strchr(buf, '1') != NULL){
+          lcd->bdev->dev.bus->pm->suspend(&lcd->bdev->dev);
+    }
+    else if (strchr(buf, '0') != NULL){
+          lcd->bdev->dev.bus->pm->resume(&lcd->bdev->dev);
+    }
+
+    return len;
+}
+
+static DEVICE_ATTR(suspend, 0664, bmi_lcd_suspend_show, bmi_lcd_suspend_store);
 
 /*
  * 	BMI set up
@@ -117,6 +156,14 @@ MODULE_DEVICE_TABLE(bmi, bmi_lcd_tbl);
 
 int	bmi_lcd_probe (struct bmi_device *bdev);
 void	bmi_lcd_remove (struct bmi_device *bdev);
+int	bmi_lcd_resume (struct device *dev);
+int	bmi_lcd_suspend (struct device *dev);
+
+static struct dev_pm_ops bmi_lcd_pm =
+{
+	.resume = bmi_lcd_resume,
+	.suspend = bmi_lcd_suspend,
+};
 
 // BMI driver structure
 static struct bmi_driver bmi_lcd_driver = 
@@ -124,7 +171,8 @@ static struct bmi_driver bmi_lcd_driver =
 	.name     = "bmi_lcd", 
 	.id_table = bmi_lcd_tbl, 
 	.probe    = bmi_lcd_probe, 
-	.remove   = bmi_lcd_remove, 
+	.remove   = bmi_lcd_remove,
+	.pm       = &bmi_lcd_pm,
 };
 
 /*
@@ -132,10 +180,12 @@ static struct bmi_driver bmi_lcd_driver =
  */
 
 // interrupt handler
+/*
 static irqreturn_t module_irq_handler(int irq, void *dummy)
 {
 	return IRQ_HANDLED;
 }
+*/
 
 /*
  * 	BMI functions
@@ -164,6 +214,11 @@ int bmi_lcd_probe(struct bmi_device *bdev)
 
 	lcd->bdev = 0;
 	lcd->open_flag = 0;
+
+	//create sysfs entries
+	err = sysfs_create_file(&bdev->dev.kobj, &dev_attr_suspend.attr);
+	if (err < 0)
+	        printk(KERN_ERR "Error creating SYSFS entries...\n");
 
 	// Get display info and disable active display
 	dssdev = NULL;
@@ -205,7 +260,6 @@ int bmi_lcd_probe(struct bmi_device *bdev)
 	// bind driver and bmi_device 
 	lcd->bdev = bdev;
 
-
   	gpio_direction_input(15);		
 
 	tsc_info.irq = gpio_to_irq(10);
@@ -236,10 +290,10 @@ int bmi_lcd_probe(struct bmi_device *bdev)
 
 	return 0;
 
- err1:	
-	bmi_device_set_drvdata (bdev, 0);
-	lcd->bdev = 0;
-	return -ENODEV;
+//err1:	
+	//bmi_device_set_drvdata (bdev, 0);
+	//lcd->bdev = 0;
+	//return -ENODEV;
 }
 
 // remove PIM
@@ -275,7 +329,54 @@ void bmi_lcd_remove(struct bmi_device *bdev)
 	// disable display
 	this_disp->disable(this_disp);
 
+	//remove sysfs entries
+	sysfs_remove_file(&bdev->dev.kobj, &dev_attr_suspend.attr);
+
+
 	return;
+}
+
+
+/*
+ *	PM routines
+ */
+
+int bmi_lcd_resume(struct device *dev)
+{
+	struct bmi_device *bmi_dev;
+	struct bmi_lcd *lcd;
+
+	bmi_dev = to_bmi_device(dev);
+	lcd = dev_get_drvdata(dev);
+
+	printk(KERN_INFO "bmi_lcd: resume...\n");
+	bmi_slot_spi_enable(bmi_dev->slot->slotnum);
+
+	lcd->tsc->dev.bus->resume(&lcd->tsc->dev);
+	lcd->acc->dev.bus->resume(&lcd->acc->dev);
+	bl_backlight_dev->dev.bus->pm->resume(&bl_backlight_dev->dev);
+	this_disp->enable(this_disp);
+
+	return 0;
+}
+
+int bmi_lcd_suspend(struct device *dev)
+{
+	struct bmi_device *bmi_dev;
+	struct bmi_lcd *lcd;
+
+	bmi_dev = to_bmi_device(dev);
+	lcd = dev_get_drvdata(dev);
+
+	printk(KERN_INFO "bmi_lcd: suspend...\n");
+	
+	this_disp->disable(this_disp);
+	lcd->tsc->dev.bus->suspend(&lcd->tsc->dev, PMSG_SUSPEND);
+	lcd->acc->dev.bus->suspend(&lcd->acc->dev, PMSG_SUSPEND);
+	bl_backlight_dev->dev.bus->pm->suspend(&bl_backlight_dev->dev);
+
+	bmi_slot_spi_disable(bmi_dev->slot->slotnum);
+	return 0;
 }
 
 /*

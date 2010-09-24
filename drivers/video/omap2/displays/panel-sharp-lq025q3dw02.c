@@ -196,17 +196,17 @@ static int sharp_spi_panel_enable(struct omap_dss_device *dssdev)
   int nreset_gpio = dssdev->reset_gpio;
   struct sharp_panel_device *md = dev_get_drvdata(&dssdev->dev);
 
-  dev_info(&dssdev->dev, "spi_lcd_panel_enable\n");
+  //dev_info(&dssdev->dev, "spi_lcd_panel_enable...\n");
 
   mutex_lock(&md->mutex);
 
   if (dssdev->platform_enable)
     {
-      dev_info(&dssdev->dev, "Attempting platform enable..\n");
+      dev_info(&dssdev->dev, "attempting platform enable...\n");
       r = dssdev->platform_enable(dssdev);
       if (r)
 	{
-	  dev_warn(&dssdev->dev, "Platform enable failed..\n");
+	  dev_warn(&dssdev->dev, "platform enable failed...\n");
 	  goto exit;
 	}
       md->spi->bits_per_word = 9;
@@ -214,7 +214,7 @@ static int sharp_spi_panel_enable(struct omap_dss_device *dssdev)
 
       mdelay (1);
       if (gpio_is_valid(nreset_gpio))
-	dev_info(&dssdev->dev, "taking lcd out of reset..%d",nreset_gpio);
+	//dev_info(&dssdev->dev, "taking lcd out of reset...\n",nreset_gpio);
 	gpio_direction_output(93, 1);
 	udelay(100);
 	gpio_direction_output(90,0);
@@ -265,12 +265,13 @@ static void sharp_spi_panel_disable(struct omap_dss_device *dssdev)
 
 static int sharp_spi_panel_suspend (struct omap_dss_device *dssdev)
 {
+        printk(KERN_INFO "sharp_spi_panel_suspend\n");
 	return 0;
 }
 
 static int sharp_spi_panel_resume (struct omap_dss_device *dssdev)
 {
-
+        printk(KERN_INFO "sharp_spi_panel_resume\n");
 	return 0;
 }
 

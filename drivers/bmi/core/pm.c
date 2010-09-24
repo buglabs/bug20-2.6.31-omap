@@ -54,12 +54,13 @@ static int bmi_pm_resume (struct device * dev)
 	pm = dev->driver ? dev->driver->pm : NULL;
 	bmi_dev = to_bmi_device(dev);
 
+	printk(KERN_INFO "BMI: Bus resume..\n");
+	bmi_slot_power_on(bmi_dev->slot->slotnum);
+
 	if (pm && pm->resume) {
 		error = pm->resume(dev);
 	}
 	
-	printk(KERN_INFO "BMI: Bus resume..\n");
-	bmi_slot_power_on(bmi_dev->slot->slotnum);
 	return error;
 }
 
