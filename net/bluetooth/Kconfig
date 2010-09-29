@@ -30,6 +30,14 @@ menuconfig BT
 	  utilities like hciconfig and hcid.  These utilities and updates to
 	  Bluetooth kernel modules are provided in the BlueZ packages.
 	  For more information, see <http://www.bluez.org/>.
+config HCI_LED_TRIGGER
+       bool "Bluetooth LED trigger"
+       depends on BT
+       help
+         Creates a LED trigger that indicates the state of the hci subsystem.
+	 LED's assigned to this trigger will be turned on when a bluetooth
+         connection is established.  When all bluetooth devices have been
+	 disconnected, the LED will be turned off.
 
 config BT_L2CAP
 	tristate "L2CAP protocol support"

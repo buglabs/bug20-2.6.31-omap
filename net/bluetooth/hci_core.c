@@ -899,6 +899,14 @@ int hci_register_dev(struct hci_dev *hdev)
 	hdev->sniff_max_interval = 800;
 	hdev->sniff_min_interval = 80;
 
+#ifdef CONFIG_HCI_LED_TRIGGER
+	hdev->hci_state_trig_name = kasprintf(GFP_KERNEL, "%s", hdev->name);
+	if (!hdev->hci_state_trig_name)
+	        printk(KERN_ERR "%p Unable to register LED trigger", hdev);
+	else
+	        led_trigger_register_simple(hdev->hci_state_trig_name, &hdev->hci_state_trig);
+#endif
+
 	tasklet_init(&hdev->cmd_task, hci_cmd_task,(unsigned long) hdev);
 	tasklet_init(&hdev->rx_task, hci_rx_task, (unsigned long) hdev);
 	tasklet_init(&hdev->tx_task, hci_tx_task, (unsigned long) hdev);

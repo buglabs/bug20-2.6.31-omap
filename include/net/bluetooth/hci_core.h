@@ -148,6 +148,10 @@ struct hci_dev {
 	void (*destruct)(struct hci_dev *hdev);
 	void (*notify)(struct hci_dev *hdev, unsigned int evt);
 	int (*ioctl)(struct hci_dev *hdev, unsigned int cmd, unsigned long arg);
+#ifdef CONFIG_HCI_LED_TRIGGER
+        struct led_trigger *hci_state_trig;
+        char *hci_state_trig_name;
+#endif
 };
 
 struct hci_conn {

@@ -704,7 +704,7 @@ static struct omap_pwm_led_platform_data omap_pwm_led_gpt8 = {
        .name                = "omap3bug:blue:bt",
        .intensity_timer     = 8,
        .blink_timer         = 0,
-       .default_trigger     = "none",
+       .default_trigger     = "hci0",
        //.set_power           = set_power(&omap_pwm_led_gpt92, 0),
 };
 

@@ -37,6 +37,7 @@
 #include <linux/interrupt.h>
 #include <linux/notifier.h>
 #include <net/sock.h>
+#include <linux/leds.h>
 
 #include <asm/system.h>
 #include <asm/uaccess.h>
@@ -202,6 +203,10 @@ struct hci_conn *hci_conn_add(struct hci_dev *hdev, int type, bdaddr_t *dst)
 
 	BT_DBG("%s dst %s", hdev->name, batostr(dst));
 
+#ifdef CONFIG_HCI_LED_TRIGGER
+	led_trigger_event(hdev->hci_state_trig, LED_FULL);
+#endif
+
 	conn = kzalloc(sizeof(struct hci_conn), GFP_ATOMIC);
 	if (!conn)
 		return NULL;
@@ -291,6 +296,11 @@ int hci_conn_del(struct hci_conn *conn)
 	hci_conn_del_sysfs(conn);
 
 	hci_dev_put(hdev);
+
+#ifdef CONFIG_HCI_LED_TRIGGER
+	if (!(hdev->conn_hash.acl_num + hdev->conn_hash.sco_num))
+	      led_trigger_event(hdev->hci_state_trig, LED_OFF);
+#endif
 
 	return 0;
 }

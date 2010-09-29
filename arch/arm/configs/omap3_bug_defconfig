@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # Linux kernel version: 2.6.31-omap1
-# Fri Sep 24 13:17:39 2010
+# Wed Sep 29 18:01:01 2010
 #
 CONFIG_ARM=y
 CONFIG_HAVE_PWM=y
@@ -577,6 +577,7 @@ CONFIG_IP_NF_TARGET_MASQUERADE=m
 # CONFIG_CAN is not set
 # CONFIG_IRDA is not set
 CONFIG_BT=y
+CONFIG_HCI_LED_TRIGGER=y
 CONFIG_BT_L2CAP=y
 CONFIG_BT_SCO=y
 CONFIG_BT_RFCOMM=y
