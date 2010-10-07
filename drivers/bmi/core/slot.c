@@ -391,6 +391,7 @@ static int bmi_register_slot(struct bmi_slot *slot)
     printk(KERN_ERR "BMI Class doesn't exist...\n");
     goto unlist;
   } 
+  slot->slotdev.class = class;
   res = device_register(&slot->slotdev);
   if (res) {
     printk(KERN_ERR "SLOT: Couldn't register slot... %d\n",res);
