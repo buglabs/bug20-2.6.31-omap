@@ -98,45 +98,6 @@ struct bmi_lcd bmi_lcd;
 static int major;	// control device major
 
 /*
- *      sysfs interface
- */
-
-static ssize_t bmi_lcd_suspend_show(struct device *dev, 
-				    struct device_attribute *attr, char *buf)
-{
-    int len = 0;
-    struct bmi_lcd *lcd = dev_get_drvdata(dev);
-
-    int status = lcd->bdev->dev.power.status;
-    
-    if (status == DPM_ON)
-      len += sprintf(buf+len, "0");      
-    else
-      len += sprintf(buf+len, "1");      
-    
-    len += sprintf(len+buf, "\n");
-    return len;
-}
-	
-static ssize_t bmi_lcd_suspend_store(struct device *dev,
-			  struct device_attribute *attr,
-			  const char *buf, size_t len)
-{
-    struct bmi_lcd *lcd = dev_get_drvdata(dev);
-
-    if (strchr(buf, '1') != NULL){
-          lcd->bdev->dev.bus->pm->suspend(&lcd->bdev->dev);
-    }
-    else if (strchr(buf, '0') != NULL){
-          lcd->bdev->dev.bus->pm->resume(&lcd->bdev->dev);
-    }
-
-    return len;
-}
-
-static DEVICE_ATTR(suspend, 0664, bmi_lcd_suspend_show, bmi_lcd_suspend_store);
-
-/*
  * 	BMI set up
  */
 
@@ -214,11 +175,6 @@ int bmi_lcd_probe(struct bmi_device *bdev)
 
 	lcd->bdev = 0;
 	lcd->open_flag = 0;
-
-	//create sysfs entries
-	err = sysfs_create_file(&bdev->dev.kobj, &dev_attr_suspend.attr);
-	if (err < 0)
-	        printk(KERN_ERR "Error creating SYSFS entries...\n");
 
 	// Get display info and disable active display
 	dssdev = NULL;
@@ -328,10 +284,6 @@ void bmi_lcd_remove(struct bmi_device *bdev)
 
 	// disable display
 	this_disp->disable(this_disp);
-
-	//remove sysfs entries
-	sysfs_remove_file(&bdev->dev.kobj, &dev_attr_suspend.attr);
-
 
 	return;
 }
