@@ -411,7 +411,7 @@ static void omap3_bug_panel_disable_dvi(struct omap_dss_device *display)
 static struct omap_dss_device omap3_bug_vga_device = {
 	.type                = OMAP_DISPLAY_TYPE_DPI,
 	.name                = "vga",
-	.driver_name         = "vga_panel",
+	.driver_name         = "bug_vga_panel",
 	.phy.dpi.data_lines  = 24,
 	.platform_enable     = omap3_bug_panel_enable_dvi,
 	.platform_disable    = omap3_bug_panel_disable_dvi,
@@ -420,7 +420,7 @@ static struct omap_dss_device omap3_bug_vga_device = {
 static struct omap_dss_device omap3_bug_dvi_device = {
 	.type                = OMAP_DISPLAY_TYPE_DPI,
 	.name                = "dvi",
-	.driver_name         = "generic_panel",
+	.driver_name         = "bug_dvi_panel",
 	.phy.dpi.data_lines  = 24,
 	.platform_enable     = omap3_bug_panel_enable_dvi,
 	.platform_disable    = omap3_bug_panel_disable_dvi,

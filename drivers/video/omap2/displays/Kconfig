@@ -1,19 +1,19 @@
 menu "OMAP2/3 Display Device Drivers"
         depends on OMAP2_DSS
 
-config PANEL_GENERIC
-        tristate "Generic Panel"
+config PANEL_BUG_DVI
+        tristate "Bug DVI Panel"
         depends on OMAP2_DSS
         help
-	  Generic panel driver.
-	  Used for DVI output for Beagle and OMAP3 SDP.
+	  Generic DVI panel driver.
+	  Used for DVI output for Bug 2.0.
 
-config PANEL_VGA
-        tristate "Generic VGA Panel"
+config PANEL_BUG_VGA
+        tristate "Bug VGA Panel"
         depends on OMAP2_DSS
         help
-	  Generic panel driver.
-	  Used for VGA output for Beagle and OMAP3 SDP.
+	  Generic VGA panel driver.
+	  Used for VGA output for Bug 2.0.
 
 config PANEL_SHARP_LS037V7DW01
         tristate "Sharp LS037V7DW01 LCD Panel"

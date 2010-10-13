@@ -19,5 +19,11 @@ int tfp410_disable(struct i2c_client *client);
 
 int tfp410_init(struct i2c_client *client);
 
+/*
+ * tfp410_display_present - returns 1 or 0 based on state of DVI connection
+ */
+
+int tfp410_display_present(struct i2c_client *client);
+
 
 //#endif /* __LINUX_TFP */

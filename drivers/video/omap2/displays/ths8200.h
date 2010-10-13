@@ -21,3 +21,5 @@ int ths8200_init(struct i2c_client *client);
 
 
 //#endif /* __LINUX_TFP */
+
+int ths8200_test(struct i2c_client *client, u8 reg, u8 value);

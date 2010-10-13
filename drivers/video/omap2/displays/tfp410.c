@@ -12,10 +12,6 @@
  * http://www.gnu.org/copyleft/gpl.html
  */
 
-/*
- *	Include files
- */
-
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/delay.h>
@@ -38,16 +34,14 @@ static int tfp410_write (struct i2c_client *client, unsigned char offset, unsign
     return err;
 }
 
+static int tfp410_read(struct i2c_client *client, u8 reg)
+{
+    return i2c_smbus_read_byte_data(client, reg);
+}
+
 int tfp410_enable(struct i2c_client *client)
 {
     int err = 0;
-
-    //bring reset line low
-    gpio_direction_output(10, 0);
-    gpio_set_value (10, 1);
-    mdelay (1);
-    gpio_set_value (10, 0);
-    mdelay (1);
 
     //exit PD mode
     err |= tfp410_write(client, 0x08, 0xbd);
@@ -65,24 +59,12 @@ int tfp410_disable(struct i2c_client *client)
 {
     int err;
 
-    //issue reset
-    gpio_direction_output(10, 0);
-    gpio_set_value (10, 1);
-    mdelay (1);
-    gpio_set_value (10, 0);
-    mdelay (1);
-
     //attempt graceful powerdown
     err = tfp410_write(client, 0x08, 0xbc);
     if (err < 0) {
         dev_err(&client->dev, "%s: TFP410 may already be in RESET or PD mode...\n", __func__);
        return -EINVAL;
     }
-    mdelay(1);    
-
-    //hold reset line high
-    gpio_direction_output(10, 0);
-    gpio_set_value (10, 1);
     mdelay(1);    
 
     return 0;
@@ -93,14 +75,7 @@ EXPORT_SYMBOL(tfp410_disable);
 int tfp410_init(struct i2c_client *client)
 {
     int err = 0;
-
-    //issue reset
-    gpio_direction_output(10, 0);
-    gpio_set_value (10, 1);
-    mdelay (1);
-    gpio_set_value (10, 0);
-    mdelay (1);
-
+    
     //init tfp
     err |= tfp410_write(client, 0x08, 0xbd);
     mdelay (1);
@@ -118,17 +93,28 @@ int tfp410_init(struct i2c_client *client)
 }
 EXPORT_SYMBOL(tfp410_init);
 
+int tfp410_display_present(struct i2c_client *client)
+{
+    u8 value;
+
+    value = tfp410_read(client, 0x09);
+    value &= 0x04;
+    if (value > 0)
+            return 1;
+    else
+            return 0;
+}
+EXPORT_SYMBOL(tfp410_display_present);
+
 static int tfp410p_probe(struct i2c_client *client,
 			 const struct i2c_device_id *id)
 {
-    //printk (KERN_INFO "tfp410.c: probe...\n");
 
     return 0;
 }
 
 static int tfp410p_remove(struct i2c_client *client)
 {
-    //printk (KERN_INFO "tfp410.c: remove...\n");
 
 	return 0;
 }

@@ -1,5 +1,5 @@
-obj-$(CONFIG_PANEL_GENERIC) += panel-generic.o
-obj-$(CONFIG_PANEL_VGA) += panel-vga.o
+obj-$(CONFIG_PANEL_BUG_DVI) += panel-bug-dvi.o
+obj-$(CONFIG_PANEL_BUG_VGA) += panel-bug-vga.o
 obj-$(CONFIG_PANEL_SHARP_LS037V7DW01) += panel-sharp-ls037v7dw01.o
 obj-$(CONFIG_PANEL_SHARP_LQ043T1DG01) += panel-sharp-lq043t1dg01.o
 obj-$(CONFIG_PANEL_SHARP_SPI_LCD) += panel-sharp-lq025q3dw02.o
