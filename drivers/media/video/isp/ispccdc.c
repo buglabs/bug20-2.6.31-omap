@@ -1755,7 +1755,7 @@ static int ccdc_set_format(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh,
 
 	/* Propagate the format from sink to source */
 	if (pad == CCDC_PAD_SINK) {
-		u32 syn_mode, ispctrl_val;
+		u32 syn_mode, ispctrl_val, rsz_cnt;
 		struct isp_device *isp = to_isp_device(ccdc);
 		if (!isp_get(isp))
 			return -EBUSY;
@@ -1764,9 +1764,12 @@ static int ccdc_set_format(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh,
 					    ISPCCDC_SYN_MODE);
 		ispctrl_val = isp_reg_readl(isp, OMAP3_ISP_IOMEM_MAIN, 
 					    ISP_CTRL);
+		rsz_cnt     = isp_reg_readl(isp, OMAP3_ISP_IOMEM_RESZ, 
+					    ISPRSZ_CNT);
 		syn_mode    &= ISPCCDC_SYN_MODE_INPMOD_MASK;
 		syn_mode    &= ~(ISPCCDC_SYN_MODE_PACK8);
 		ispctrl_val &= ~(ISPCTRL_PAR_BRIDGE_MASK | ISPCTRL_JPEG_FLUSH);
+		rsz_cnt     &= ~(ISPRSZ_CNT_YCPOS);
 		switch(format->code) {
 		case V4L2_MBUS_FMT_YUYV16_1X16:
 		case V4L2_MBUS_FMT_UYVY16_1X16:
@@ -1780,13 +1783,21 @@ static int ccdc_set_format(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh,
 		case V4L2_MBUS_FMT_RGB555_2X8_PADHI_BE:
 		case V4L2_MBUS_FMT_RGB565_2X8_LE:
 		case V4L2_MBUS_FMT_RGB565_2X8_BE:
+			ispctrl_val |= ISPCTRL_PAR_BRIDGE_LENDIAN 
+				<< ISPCTRL_PAR_BRIDGE_SHIFT;
 			// This mode captures 8b data from bus and packs
 			// it into 8b byte stream. Intended for raw
 			// output reading from the CCDC (i.e. these
 			// modes cannot be passed onto the preveiw or resizer).
 			syn_mode |= ISPCCDC_SYN_MODE_INPMOD_YCBCR16;
-			ispctrl_val |= ISPCTRL_PAR_BRIDGE_LENDIAN 
-				<< ISPCTRL_PAR_BRIDGE_SHIFT;
+			switch(format->code) {
+			case V4L2_MBUS_FMT_UYVY16_1X16:
+			case V4L2_MBUS_FMT_VYUY16_1X16:
+			case V4L2_MBUS_FMT_YUYV8_2X8_BE:
+			case V4L2_MBUS_FMT_YVYU8_2X8_BE:
+				rsz_cnt     |= ISPRSZ_CNT_YCPOS;
+				break;
+			}
 			break;
 		case V4L2_MBUS_FMT_GREY8_1X8:
 		case V4L2_MBUS_FMT_SGRBG8_1X8:
@@ -1814,6 +1825,8 @@ static int ccdc_set_format(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh,
 			       ISPCCDC_SYN_MODE);
 		isp_reg_writel(isp, ispctrl_val, OMAP3_ISP_IOMEM_MAIN, 
 			       ISP_CTRL);
+		isp_reg_writel(isp, ispctrl_val, OMAP3_ISP_IOMEM_RESZ, 
+			       ISPRSZ_CNT);
 		isp_put(isp);
 
 
