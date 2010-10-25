@@ -81,6 +81,9 @@ static int ml8953_enable(struct ml8953 *ac)
 		if(ml8953_smbus_write(client, ACC_CFG, *data))
 			error = -ENODEV;
 
+		// Clear INTRQ
+		*data = ml8953_smbus_read(client, ACC_INTRQ);
+
 		// set INTMSK
 		*data = 0xFE;
 		if(ml8953_smbus_write(client, ACC_INTMSK, *data))
