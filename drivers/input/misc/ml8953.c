@@ -27,13 +27,13 @@ static int ml8953_enable(struct ml8953 *ac)
 	int error = 0;
 	
 	mutex_lock(&ac->mutex);
-	if (ac->open) {
+	if (ac->disabled) {
 		*data = 0x0;
 		if (ml8953_smbus_write(client, ACC_PAGESEL, *data))
 			error = -ENODEV;
 		// read device to verify existance
 		*data = ml8953_smbus_read(client, ACC_CPURDY);
-		
+
 		// set TMD = 0x300 (~250 ms)
 		*data = 0x5;
 		if(ml8953_smbus_write(client, ACC_TMDH, *data))
@@ -43,17 +43,17 @@ static int ml8953_enable(struct ml8953 *ac)
 		if(ml8953_smbus_write(client, ACC_TMDL, *data))
 			error = -ENODEV;
 
-			// set INTOTM
+		// set INTOTM
 		*data = 0x00;
 		if(ml8953_smbus_write(client, ACC_INTOTM, *data))
 			error = -ENODEV;
 
-			// set GxAVE
+		// set GxAVE
 		*data = 0x0;
 		if(ml8953_smbus_write(client, ACC_GAAVE, *data))
 			error = -ENODEV;
 
-			// set GDTCT[01]
+		// set GDTCT[01]
 		*data = 0x00;
 		if(ml8953_smbus_write(client, ACC_GDTCT0L, *data))
 			error = -ENODEV;
@@ -70,32 +70,34 @@ static int ml8953_enable(struct ml8953 *ac)
 		if(ml8953_smbus_write(client, ACC_GDTCT1H, *data))
 			error = -ENODEV;
 
-			// set MODE0
+		// set MODE0
 
 		*data = ACC_MODE0_PDOFF | ACC_MODE0_TMPOFF | ACC_MODE0_AGCON | ACC_MODE0_MAUTO | ACC_MODE0_GDET10;
 		if(ml8953_smbus_write(client, ACC_MODE0, *data))
 			error = -ENODEV;
 
-			// set CFG
+		// set CFG
 		*data = ACC_CFG_REGMD | ACC_CFG_INTLVL;
 		if(ml8953_smbus_write(client, ACC_CFG, *data))
 			error = -ENODEV;
 
-			// set INTMSK
+		// set INTMSK
 		*data = 0xFE;
 		if(ml8953_smbus_write(client, ACC_INTMSK, *data))
 			error = -ENODEV;
 
-			// set CTRL0
+		// set CTRL0
 		*data = ACC_CTRL0_CGAUTO;
 		if(ml8953_smbus_write(client, ACC_CTRL0, *data))
 			error = -ENODEV;
 
-			// write PAGESEL
+		// write PAGESEL
 		*data = 0x1;
 		if(ml8953_smbus_write(client, ACC_PAGESEL, *data))
 			error = -ENODEV;
 	}
+	if (!error)
+		ac->disabled = 0;
 	mutex_unlock(&ac->mutex);
 	return error;
 }
@@ -103,11 +105,23 @@ static int ml8953_enable(struct ml8953 *ac)
 static int ml8953_disable(struct ml8953 *ac)
 {
 	struct i2c_client *client = ac->client;
+	unsigned char data[1];
+	int error = 0;
 
-	mutex_lock(&ac->mutex);
-	cancel_work_sync(&ac->work);
-	mutex_unlock(&ac->mutex);
-	return 0;
+	if (!ac->disabled) {
+		*data = 0x0;
+		if (ml8953_smbus_write(client, ACC_PAGESEL, *data))
+			error = -ENODEV;
+		*data = 0x0;
+		if(ml8953_smbus_write(client, ACC_INTMSK, *data))
+			error = -ENODEV;
+
+		mutex_lock(&ac->mutex);
+		cancel_work_sync(&ac->work);
+		mutex_unlock(&ac->mutex);
+		ac->disabled = 1;
+	}
+	return error;
 }
 
 static void ml8953_work(struct work_struct *work)
@@ -123,72 +137,74 @@ static void ml8953_work(struct work_struct *work)
 
 	// orientation
 	// read ROLL
-	*data = ml8953_smbus_read(client, ACC_ROLLH);
-	roll = (0x0000 | *data) << 8;
+	if (!ac->disabled) {
+		*data = ml8953_smbus_read(client, ACC_ROLLH);
+		roll = (0x0000 | *data) << 8;
 
-	*data = ml8953_smbus_read(client, ACC_ROLLL);
-	roll = roll | *data;
+		*data = ml8953_smbus_read(client, ACC_ROLLL);
+		roll = roll | *data;
 		// read PITCH
-	*data = ml8953_smbus_read(client, ACC_PITCHH);
-	pitch = (0x0000 | *data) << 8;
+		*data = ml8953_smbus_read(client, ACC_PITCHH);
+		pitch = (0x0000 | *data) << 8;
 
-	*data = ml8953_smbus_read(client, ACC_PITCHL);
-	pitch = pitch | *data;
+		*data = ml8953_smbus_read(client, ACC_PITCHL);
+		pitch = pitch | *data;
 
-	*data = ml8953_smbus_read(client, ACC_GAZH);
-	ac->sample[0] = *data;
-	gz = *data << 8;
+		*data = ml8953_smbus_read(client, ACC_GAZH);
+		ac->sample[0] = *data;
+		gz = *data << 8;
 
-	*data = ml8953_smbus_read(client, ACC_GAZL);
-	ac->sample[1] = *data;
-	gz = gz | *data;
+		*data = ml8953_smbus_read(client, ACC_GAZL);
+		ac->sample[1] = *data;
+		gz = gz | *data;
 
-	*data = ml8953_smbus_read(client, ACC_GAYH);
-	ac->sample[2] = *data;
-	gy = *data << 8;
+		*data = ml8953_smbus_read(client, ACC_GAYH);
+		ac->sample[2] = *data;
+		gy = *data << 8;
 
-	*data = ml8953_smbus_read(client, ACC_GAYL);
-	ac->sample[3] = *data;
-	gy = gy | *data;
-	
-	*data = ml8953_smbus_read(client, ACC_GAXH);
-	ac->sample[4] = *data;
-	gx = *data << 8;
+		*data = ml8953_smbus_read(client, ACC_GAYL);
+		ac->sample[3] = *data;
+		gy = gy | *data;
 
-	*data = ml8953_smbus_read(client, ACC_GAXL);
-	ac->sample[5] = *data;
-	gx = gx | *data;
-	
-	mutex_lock(&ac->mutex);
-	ac->saved[0] = gx;
-	ac->saved[1] = gy;
-	ac->saved[2] = gz;
-	mutex_unlock(&ac->mutex);
-	// read STATUS
-	*data = ml8953_smbus_read(client, ACC_STATUS);
+		*data = ml8953_smbus_read(client, ACC_GAXH);
+		ac->sample[4] = *data;
+		gx = *data << 8;
 
-	if((*data & 0x1) == 0) {
+		*data = ml8953_smbus_read(client, ACC_GAXL);
+		ac->sample[5] = *data;
+		gx = gx | *data;
+
+		mutex_lock(&ac->mutex);
+		ac->saved[0] = gx;
+		ac->saved[1] = gy;
+		ac->saved[2] = gz;
+		mutex_unlock(&ac->mutex);
+		// read STATUS
+		*data = ml8953_smbus_read(client, ACC_STATUS);
+
+		if((*data & 0x1) == 0) {
 
 			// write PAGESEL
-		*data = 0x0;
-		if(ml8953_smbus_write(client, ACC_PAGESEL, *data))
+			*data = 0x0;
+			if(!ml8953_smbus_write(client, ACC_PAGESEL, *data))
 
-			// read INTRQ
-		*data = ml8953_smbus_read(client, ACC_INTRQ);
-	}
+				// read INTRQ
+				*data = ml8953_smbus_read(client, ACC_INTRQ);
+		}
 
 		// write PAGESEL
-	*data = 0x1;
-	ml8953_smbus_write(client, ACC_PAGESEL, *data);
+		*data = 0x1;
+		ml8953_smbus_write(client, ACC_PAGESEL, *data);
 
-	// report orientation
-	
-	//printk(KERN_DEBUG "ml8953_work: 0x%x\n", (pitch << 16) | roll);
-	input_report_abs(ac->input, ABS_MISC, (pitch << 16) | roll);
+		// report orientation
+
+		//printk(KERN_DEBUG "ml8953_work: 0x%x\n", (pitch << 16) | roll);
+		input_report_abs(ac->input, ABS_MISC, (pitch << 16) | roll);
+		//printk(KERN_INFO "ml8953_work: enabling irq %d\n",client->irq);
+	}
 	input_sync(ac->input);
-	//printk(KERN_INFO "ml8953_work: enabling irq %d\n",client->irq);
-	enable_irq(client->irq);
 	msleep(10);
+	//enable_irq(client->irq);
 }
 
 static irqreturn_t ml8953_irq(int irq, void *handle)
@@ -196,7 +212,7 @@ static irqreturn_t ml8953_irq(int irq, void *handle)
 	struct ml8953 *ac = handle;
 
 	//printk(KERN_INFO "ml8953_irq: %d\n", irq);
-	disable_irq_nosync(irq);
+	//disable_irq_nosync(irq);
 	schedule_work(&ac->work);
 
 	return IRQ_HANDLED;
@@ -243,8 +259,39 @@ static ssize_t ml8953_position_show(struct device *dev,
 
 static DEVICE_ATTR(position, 0444, ml8953_position_show, NULL);
 
+static ssize_t ml8953_disable_show(struct device *dev,
+				    struct device_attribute *attr, char *buf)
+{
+	struct ml8953 *ac = dev_get_drvdata(dev);
+
+	return sprintf(buf, "%u\n", ac->disabled);
+}
+
+static ssize_t ml8953_disable_store(struct device *dev,
+				     struct device_attribute *attr,
+				     const char *buf, size_t count)
+{
+	struct ml8953 *ac = dev_get_drvdata(dev);
+	unsigned long val;
+	int error;
+
+	error = strict_strtoul(buf, 10, &val);
+	if (error)
+		return error;
+
+	if (val)
+		ml8953_disable(ac);
+	else
+		ml8953_enable(ac);
+
+	return count;
+}
+
+static DEVICE_ATTR(disable, 0664, ml8953_disable_show, ml8953_disable_store);
+
 static struct attribute *ml8953_attributes[] = {
 	&dev_attr_position.attr,
+	&dev_attr_disable.attr,
 	NULL
 };
 
@@ -274,6 +321,7 @@ static int __devinit ml8953_i2c_probe(struct i2c_client *client,
 	input_dev = input_allocate_device();
 	if (!input_dev || !ac)
 		return -ENOMEM;
+	ac->disabled = 1;
 	ac->client = client;
 	ac->input = input_dev;
 	snprintf(ac->phys, sizeof(ac->phys),
@@ -301,7 +349,7 @@ static int __devinit ml8953_i2c_probe(struct i2c_client *client,
 	input_set_abs_params(input_dev, ABS_Z, -ML8953_RANGE, ML8953_RANGE, 3, 3);
 	
 	error = request_irq(client->irq, ml8953_irq,
-			  IRQF_TRIGGER_LOW, client->dev.driver->name, ac);
+			  IRQF_TRIGGER_FALLING, client->dev.driver->name, ac);
 	if (error) {
 		dev_err(&client->dev, "irq %d busy?\n", client->irq);
 		goto free_input_dev;
@@ -316,6 +364,7 @@ static int __devinit ml8953_i2c_probe(struct i2c_client *client,
 	if (error)
 		goto free_dev_irq;
 	i2c_set_clientdata(client, ac);
+	ml8953_enable(ac);
 	return 0;
 free_dev_irq:
 	free_irq(client->irq, ac);

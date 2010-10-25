@@ -94,5 +94,6 @@ struct ml8953 {
 	u8 sample[6];
 	short saved[3];
 	u8 open;
+	u8 disabled;
 };
 
