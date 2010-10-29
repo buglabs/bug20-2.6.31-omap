@@ -1,0 +1,168 @@
+/*
+ * drivers/misc/bug_batt_low.c
+ *
+ * Dock driver for OMAP3 BUGBASE
+ *
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 as published
+ * by the Free Software Foundation.
+ *
+ * This program is distributed "as is" WITHOUT ANY WARRANTY of any kind,
+ * whether express or implied; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License for more details.
+ */
+
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/platform_device.h>
+#include <mach/hardware.h>
+#include <mach/gpio.h>
+#include <linux/irq.h>
+#include <linux/interrupt.h>
+#include <mach/mux.h>
+#include <linux/bmi.h>
+
+#define BATT_LOW_GPIO      64
+
+struct bqsig_device {
+        struct platform_device  *pdev;
+        struct work_struct       irq_handler_work;
+};
+
+static struct platform_device *bug_bqsig_dev;
+
+/*
+ *    work queuing
+ */
+
+static inline struct bqsig_device *irq_handler_work_to_bqsig_device(struct work_struct *work)
+{
+  return container_of(work, struct bqsig_device, irq_handler_work);
+}
+
+static void irq_handler_work(struct work_struct *work)
+{
+        bool value;
+  	//struct bqsig_device *bq_signal = irq_handler_work_to_bqsig_device(work);
+	
+	value = gpio_get_value(BATT_LOW_GPIO);
+
+	//asserted 
+	if (value) {
+	  printk(KERN_INFO "WARNING: Low Battery!\n");
+	}
+	else {
+	  printk(KERN_INFO "WARNING: Battery Level Safe\n");
+	}
+}
+
+/*
+ *    interrupt handler
+ */
+
+static irqreturn_t bqsig_irq_handler(int irq, void *dev_id)
+{
+  struct bqsig_device *bq_signal = dev_id;
+  schedule_work(&bq_signal->irq_handler_work);
+  return IRQ_HANDLED;
+}
+
+/*
+ *    probe/remove
+ */
+
+static int bug_bqsig_probe(struct platform_device *pdev)
+{
+        int err;
+	//bool value;
+	struct bqsig_device *bq_signal;
+
+	bq_signal = kzalloc(sizeof(struct bqsig_device), GFP_KERNEL);
+	bq_signal->pdev = pdev;
+	
+	// init work struct
+	INIT_WORK(&bq_signal->irq_handler_work, irq_handler_work);
+
+	// request dock presence pin
+	err =  gpio_request(BATT_LOW_GPIO, "bq_batt_low");
+	err |= gpio_direction_input(BATT_LOW_GPIO);
+	omap_set_gpio_debounce(BATT_LOW_GPIO, 1);
+	omap_set_gpio_debounce_time(BATT_LOW_GPIO, 0xff);
+	
+	omap_cfg_reg(K8_34XX_GPIO64);
+
+	// request BATT_LOW irq
+	err = request_irq(gpio_to_irq(BATT_LOW_GPIO), bqsig_irq_handler,
+			  IRQF_TRIGGER_FALLING | IRQF_TRIGGER_RISING, "bq-battlow-signal", bq_signal); 
+ 
+	platform_set_drvdata(pdev, bq_signal);
+
+	// check for batt_low assertion on probe
+
+	if (err < 0) {
+	        printk(KERN_ERR "bq_signal: error during probe...\n");
+		return -EINVAL;
+	}
+
+	printk(KERN_INFO "bug_bqsig: bug_bqsig_probe...\n");
+	return 0;
+}
+
+static int bug_bqsig_remove(struct platform_device *pdev)
+{
+        struct bqsig_device *bq_signal;
+	bq_signal = platform_get_drvdata(pdev);
+	
+	free_irq(gpio_to_irq(BATT_LOW_GPIO), bq_signal);
+	gpio_free(BATT_LOW_GPIO);
+
+	printk(KERN_INFO "bug_bqsig: bug_bqsig_remove...\n");
+	return 0;
+}
+
+static int bug_bqsig_suspend(struct platform_device *pdev, pm_message_t state)
+{
+       return 0;
+}
+
+static int bug_bqsig_resume(struct platform_device *pdev)
+{
+       return 0;
+}
+
+static struct platform_driver bug_bqsig_drv = {
+       .probe          = bug_bqsig_probe,
+       .remove         = bug_bqsig_remove,
+       .suspend        = bug_bqsig_suspend,
+       .resume         = bug_bqsig_resume,
+       .driver         = {
+                               .name   = "bq-battlow-signal",
+                       },
+};
+
+static int __init bug_bqsig_init(void)
+{
+  int ret; 
+
+  bug_bqsig_dev = platform_device_alloc("bq-battlow-signal", -1);
+  ret = platform_device_add(bug_bqsig_dev);
+
+  ret = platform_driver_register(&bug_bqsig_drv);
+  return ret;
+}
+
+static void __exit bug_bqsig_exit(void)
+{
+  platform_driver_unregister(&bug_bqsig_drv);
+  platform_device_unregister(bug_bqsig_dev);
+}
+
+module_init(bug_bqsig_init);
+module_exit(bug_bqsig_exit);
+
+MODULE_AUTHOR("Dave R");
+MODULE_DESCRIPTION("OMAP3 Bug BATT_LOW Signal Handler");
+MODULE_LICENSE("GPL");
