@@ -67,13 +67,18 @@ struct bmi_li3m02cm {
 };
 
 	// I2C Slave Address
-#define BMI_IOX_I2C_ADDRESS	0x38	// 7-bit address
-
-	// I2C IOX register addresses
+#define REVB
+#ifdef REVB
+#define BMI_IOX_I2C_ADDRESS	0x20	// 7-bit address
+// I2C IOX register addresses
 #define IOX_INPUT_REG		0x0
 #define IOX_OUTPUT_REG		0x1
 #define IOX_POLARITY_REG	0x2
 #define IOX_CONTROL		0x3
+
+#else
+#define BMI_IOX_I2C_ADDRESS	0x38	// 7-bit address
+#endif
 
 #define IOX_CAM_RESETB          0x80
 #define IOX_GREEN_LED           0x40
@@ -116,7 +121,7 @@ static int ReadByte_IOX (struct i2c_client *client,
         ret = i2c_transfer (client->adapter, rmsg, 2);
 
         if (ret == 2) {
-		printk (KERN_ERR "ReadByte_IOX() - addr=0x%x data=0x%02X\n", offset, *data);
+		//printk (KERN_ERR "ReadByte_IOX() - addr=0x%x data=0x%02X\n", offset, *data);
 		
                 ret = 0;
         }
@@ -148,7 +153,7 @@ static int WriteByte_IOX (struct i2c_client *client,
 #ifdef REVB
 	int	ret = 0;
 	unsigned char msg[2];
-	printk (KERN_ERR "%s - addr=0x%x data=0x%02X\n", __func__, offset, data);
+	//printk (KERN_ERR "%s - addr=0x%x data=0x%02X\n", __func__, offset, data);
 	
      	msg[0] = offset;
 	msg[1] = data;
@@ -193,6 +198,36 @@ static ssize_t store_iox_value(struct device *dev,
 	status = strict_strtol(buf, 0, &value);
 	if (status == 0) {
 		WriteByte_IOX(cam->iox, cam->sysfs_iox_i2c_addr, value);
+	}
+	return size;
+}
+
+//static ssize_t show_gpio_value(struct device *dev,
+//			struct device_attribute *attr, char *buf)
+//{
+//	struct bmi_li3m02cm *cam = dev_get_drvdata(dev);
+//	unsigned char iox_data;
+//	int ret;
+//	if(!cam)
+//		return sprintf(buf, "NULL camera handle\n");
+//
+//	ret = ReadByte_IOX (cam->iox, cam->sysfs_iox_i2c_addr, &iox_data);
+//	if(ret < 0) 
+//		return sprintf(buf, "%d\n",   ret);
+//	else
+//		return sprintf(buf, "0x%02x\n", iox_data);
+//}
+static ssize_t store_gpio_value(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t size)
+{
+	struct bmi_li3m02cm *cam = dev_get_drvdata(dev);
+	int value, addr;
+	ssize_t status;
+	int slot = cam->bdev->slot->slotnum;
+	sscanf(buf, "%d %d", &addr, &value);
+	if (status == 0) {
+		printk(KERN_ERR "%s addr=0x%x value=0x%x\n", __func__, addr, value);
+		bmi_slot_gpio_direction_out(slot, addr, value);
 	}
 	return size;
 }
@@ -336,6 +371,7 @@ static ssize_t store_context(struct device *dev,
 }
 
 
+static DEVICE_ATTR(gpio_value, S_IWUGO , NULL, store_gpio_value);
 static DEVICE_ATTR(iox_value, S_IWUGO | S_IRUGO, show_iox_value, store_iox_value);
 static DEVICE_ATTR(iox_addr,  S_IWUGO | S_IRUGO, show_iox_addr, store_iox_addr);
 static DEVICE_ATTR(mt9t111_value, S_IWUGO | S_IRUGO, show_mt9t111_value, store_mt9t111_value);
@@ -347,9 +383,8 @@ static DEVICE_ATTR(context, S_IWUGO | S_IRUGO, show_context, store_context);
 // configure IOX IO and states
 void configure_IOX(struct bmi_li3m02cm *cam)
 {	
-	WriteByte_IOX(cam->iox, IOX_OUTPUT_REG, 0);
+	WriteByte_IOX(cam->iox, IOX_OUTPUT_REG, 0x40); /* init green led off*/
 	WriteByte_IOX(cam->iox, IOX_CONTROL,    0x00); /* all outputs */
-	WriteByte_IOX(cam->iox, IOX_OUTPUT_REG, 0);
 }
 
 // configure GPIO IO and states
@@ -357,7 +392,7 @@ void configure_GPIO(struct bmi_li3m02cm *cam)
 {
 	// set states before turning on outputs
 	int slot = cam->bdev->slot->slotnum;
-	bmi_slot_gpio_direction_out(slot, GPIO_REDLED,  0); // Red LED=OFF
+	bmi_slot_gpio_direction_out(slot, GPIO_REDLED,  1); // Red LED=OFF
 	bmi_slot_gpio_direction_out(slot, GPIO_FLASHON, 0); // Flash LED=OFF
 	bmi_slot_gpio_direction_out(slot, GPIO_SER_EN,  0); // SER_EN=OFF
 }
@@ -578,7 +613,7 @@ static int li3m02cm_set_flash_strobe(struct bmi_device *bdev, int on)
 static int li3m02cm_set_red_led(struct bmi_device *bdev, int on) 
 {
 	int slotnum = bdev->slot->slotnum;
-	bmi_slot_gpio_direction_out(slotnum, GPIO_REDLED,  on ? 1 : 0);
+	bmi_slot_gpio_direction_out(slotnum, GPIO_REDLED,  on ? 0 : 1);
 	return 0;
 }
 
@@ -590,7 +625,7 @@ static int li3m02cm_set_green_led(struct bmi_device *bdev, int on)
 	ret = ReadByte_IOX (cam->iox, IOX_OUTPUT_REG, &iox_data);
 	if(ret < 0)
 		return ret;
-	if(on)
+	if(!on)
 		iox_data |=  IOX_GREEN_LED;
 	else
 		iox_data &= ~IOX_GREEN_LED;
@@ -661,6 +696,7 @@ int bmi_li3m02cm_probe(struct bmi_device *bdev)
 	bmi_register_camera(bdev, &li3m02cm_ops, &li3m02cm_bmi_ops,THIS_MODULE);
 	
 	// These can be removed after driver stabalizes. They are for debug now.
+	ret = device_create_file(&bdev->dev, &dev_attr_gpio_value);
 	ret = device_create_file(&bdev->dev, &dev_attr_iox_value);
 	ret = device_create_file(&bdev->dev, &dev_attr_iox_addr);
 	ret = device_create_file(&bdev->dev, &dev_attr_mt9t111_value);
