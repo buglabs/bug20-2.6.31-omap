@@ -1314,38 +1314,39 @@ struct mt9t111_regs pll_regs1[] = {
  // 
  //  Bypass PLL: Unchecked
  //  Input Frequency: 24.000
- //  Target Pads Frequency: 50.000
+ //  Target Pads Frequency: 24.000
  //  Target I2C Clock Frequency: 100.000
  //  Target VCO Frequency: Unspecified
  //  For Parallel Output: Checked
  //  "M" Value: Unspecified
  //  "N" Value: Unspecified
  // 
- //  Target Pads Clock Frequency: 50 MHz
+ //  Target Pads Clock Frequency: 24 MHz
  //  Input Clock Frequency: 24 MHz
  // 
- //  Actual Pads Clock Frequency: 50 MHz
- //  Sensor Core Clock Frequency: 44.444 MHz
- //  SOC Clock Frequency: 44.444 MHz
- //  MCU Clock Frequency: 50 MHz
- //  I2C Master Clock Frequency: 100.100 KHz
+ //  Actual Pads Clock Frequency: 24 MHz
+ //  Sensor Core Clock Frequency: 64 MHz
+ //  SOC Clock Frequency: 54.857 MHz
+ //  MCU Clock Frequency: 24 MHz
+ //  I2C Master Clock Frequency: 100 KHz
  // 
- //  M = 25
- //  N = 2
- //  Fpdf = 8 MHz
- //  Fvco = 400 MHz
- //  P2 = 8
- //  P4 = 9
- //  P5 = 9
- //  P6 = 8
+ //  M = 16
+ //  N = 1
+ //  Fpdf = 12 MHz
+ //  Fvco = 384 MHz
+ //  P2 = 16
+ //  P4 = 6
+ //  P5 = 7
+ //  P6 = 16
+ // 
 	{0, 0x001A, 0x001D}, // RESET_AND_MISC_CONTROL
 	{0, 0x001A, 0x0018}, // RESET_AND_MISC_CONTROL
 	{0, 0x14, 1, 1}, // Bypass PLL
 	{0, 0X14, 0, 2}, // Power-down PLL
 	{0, 0x0014, 0x2145}, //PLL control: BYPASS PLL = 8517
-	{0, 0x0010, 0x0219}, //PLL Dividers = 537
-	{0, 0x0012, 0x0070}, //PLL P Dividers = 112
-	{0, 0x002A, 0x77DD}, //PLL P Dividers 4-5-6 = 30685
+	{0, 0x0010, 0x0110}, //PLL Dividers = 272
+	{0, 0x0012, 0x00F0}, //PLL P Dividers = 240
+	{0, 0x002A, 0x7F65}, //PLL P Dividers 4-5-6 = 32613
 	{0, 0x001A, 0x218}, //Reset Misc. Control = 536
 	{0, 0x0014, 0x2545}, //PLL control: TEST_BYPASS on = 9541
 	{0, 0x0014, 0x2547}, //PLL control: PLL_ENABLE on = 9543
@@ -1461,22 +1462,22 @@ struct mt9t111_regs fmt_640x480_22fps[] = {
  //  Min. Frame Rate: Unchecked
  // 
  //  Max Frame Time: 45.4545 msec
- //  Max Frame Clocks: 2020202.0 clocks (44.444 MHz)
+ //  Max Frame Clocks: 2909090.9 clocks (64 MHz)
  //  Pixel Clock: divided by 1
  //  Skip Mode: 2x cols, 2x rows, Bin Mode: Yes
- //  Horiz clks:  1032 active + 1002 blank = 2034 total
- //  Vert  rows:  776 active + 217 blank = 993 total
- //  Extra Delay: 440 clocks
+ //  Horiz clks:  1032 active + 4862 blank = 5894 total
+ //  Vert  rows:  776 active + 83 blank = 859 total
+ //  Extra Delay: 0 clocks
  // 
- //  Actual Frame Clocks: 2020202 clocks
- //  Row Time: 45.765 usec / 2034 clocks
- //  Frame time: 45.454545 msec
- //  Frames per Sec: 22 fps
- // 
- //  50Hz Flicker Period: 218.51 lines
- //  60Hz Flicker Period: 182.09 lines
+ //  Actual Frame Clocks: 5062946 clocks
+ //  Row Time: 92.094 usec / 5894 clocks
+ //  Frame time: 79.108531 msec
+ //  Frames per Sec: 12.641 fps   (cannot match)
+ //      (Sensor Core clock minimum: 111.385 MHz )
+ //  50Hz Flicker Period: 108.59 lines
+ //  60Hz Flicker Period: 90.49 lines
  //  RX Trigger Mark: 20
- //  OB Trigger Mark: 558
+ //  OB Trigger Mark: 894
  //  HW Rev: 3
 	{0, 0x98E, 0x6800}, //Output Width (A)
 	{0, 0x990, 0x0280}, //      = 640
@@ -1505,35 +1506,33 @@ struct mt9t111_regs fmt_640x480_22fps[] = {
 	{0, 0x98E, 0x4813}, //Fine IT Max Margin (A)
 	{0, 0x990, 0x024F}, //      = 591
 	{0, 0x98E, 0x481D}, //Base Frame Lines (A)
-	{0, 0x990, 0x03E1}, //      = 993
+	{0, 0x990, 0x035B}, //      = 859
 	{0, 0x98E, 0x481F}, //Min Line Length (A)
 	{0, 0x990, 0x05D0}, //      = 1488
 	{0, 0x98E, 0x4825}, //Line Length (A)
-	{0, 0x990, 0x07F2}, //      = 2034
+	{0, 0x990, 0x1706}, //      = 5894
 	{0, 0x98E, 0x482B}, //Contex Width (A)
 	{0, 0x990, 0x0408}, //      = 1032
 	{0, 0x98E, 0x482D}, //Context Height (A)
 	{0, 0x990, 0x0308}, //      = 776
 	{0, 0x98E, 0xC8A5}, //search_f1_50
-	{0, 0x990, 0x23}, //      = 35
+	{0, 0x990, 0x1D}, //      = 29
 	{0, 0x98E, 0xC8A6}, //search_f2_50
-	{0, 0x990, 0x25}, //      = 37
+	{0, 0x990, 0x1F}, //      = 31
 	{0, 0x98E, 0xC8A7}, //search_f1_60
-	{0, 0x990, 0x2A}, //      = 42
+	{0, 0x990, 0x23}, //      = 35
 	{0, 0x98E, 0xC8A8}, //search_f2_60
-	{0, 0x990, 0x2C}, //      = 44
+	{0, 0x990, 0x25}, //      = 37
 	{0, 0x98E, 0xC844}, //period_50Hz (A)
-	{0, 0x990, 0xDB}, //      = 219
+	{0, 0x990, 0x6D}, //      = 109
 	{0, 0x98E, 0xC92F}, //period_50Hz (A MSB)
 	{0, 0x990, 0x00}, //      = 0
 	{0, 0x98E, 0xC845}, //period_60Hz (A)
-	{0, 0x990, 0xB6}, //      = 182
+	{0, 0x990, 0x5A}, //      = 90
 	{0, 0x98E, 0xC92D}, //period_60Hz (A MSB)
 	{0, 0x990, 0x00}, //      = 0
-	{0, 0x98E, 0xC88C}, //period_50Hz (B)
-	{0, 0x990, 0x71}, //      = 113
 	{0, 0x98E, 0xB825}, //FD Window Height
-	{0, 0x990, 0x05}, //      = 5
+	{0, 0x990, 0x03}, //      = 3
 	{0, 0x98E, 0xA009}, //Stat_min
 	{0, 0x990, 0x02}, //      = 2
 	{0, 0x98E, 0xA00A}, //Stat_max
@@ -1543,7 +1542,7 @@ struct mt9t111_regs fmt_640x480_22fps[] = {
 	{0, 0x98E, 0x4846}, //RX FIFO Watermark (A)
 	{0, 0x990, 0x0014}, //      = 20
 	//{0, 0x98E, 0x68AA}, //TX FIFO Watermark (A)
-	//{0, 0x990, 0x022E}, //      = 558
+	//{0, 0x990, 0x037E}, //      = 894
 	{0, 0x98E, 0x6815}, //Max FD Zone 50 Hz
 	{0, 0x990, 0x0005}, //      = 5
 	{0, 0x98E, 0x6817}, //Max FD Zone 60 Hz
@@ -1555,7 +1554,7 @@ struct mt9t111_regs fmt_640x480_22fps[] = {
 struct mt9t111_regs fmt_1024x768_20fps[] = {
  //  [CONTEXT A PARAMETERS]
  // 
- //  Requested Frames Per Second: 20.000
+ //  Requested Frames Per Second: 22.000
  //  Output Columns: 1024
  //  Output Rows: 768
  //  JPEG: Unchecked
@@ -1567,21 +1566,21 @@ struct mt9t111_regs fmt_1024x768_20fps[] = {
  //  Blanking Computation: HB Min then VB
  //  Min. Frame Rate: Unchecked
  // 
- //  Max Frame Time: 50 msec
- //  Max Frame Clocks: 2222222.2 clocks (44.444 MHz)
+ //  Max Frame Time: 45.4545 msec
+ //  Max Frame Clocks: 2909090.9 clocks (64 MHz)
  //  Pixel Clock: divided by 1
  //  Skip Mode: 2x cols, 2x rows, Bin Mode: Yes
- //  Horiz clks:  1032 active + 1002 blank = 2034 total
- //  Vert  rows:  776 active + 316 blank = 1092 total
- //  Extra Delay: 1094 clocks
+ //  Horiz clks:  1032 active + 4862 blank = 5894 total
+ //  Vert  rows:  776 active + 83 blank = 859 total
+ //  Extra Delay: 0 clocks
  // 
- //  Actual Frame Clocks: 2222222 clocks
- //  Row Time: 45.765 usec / 2034 clocks
- //  Frame time: 49.999995 msec
- //  Frames per Sec: 20 fps
- // 
- //  50Hz Flicker Period: 218.51 lines
- //  60Hz Flicker Period: 182.09 lines
+ //  Actual Frame Clocks: 5062946 clocks
+ //  Row Time: 92.094 usec / 5894 clocks
+ //  Frame time: 79.108531 msec
+ //  Frames per Sec: 12.641 fps   (cannot match)
+ //      (Sensor Core clock minimum: 111.385 MHz )
+ //  50Hz Flicker Period: 108.59 lines
+ //  60Hz Flicker Period: 90.49 lines
  //  RX Trigger Mark: 20
  //  OB Trigger Mark: 536
  //  HW Rev: 3
@@ -1612,33 +1611,33 @@ struct mt9t111_regs fmt_1024x768_20fps[] = {
 	{0, 0x98E, 0x4813}, //Fine IT Max Margin (A)
 	{0, 0x990, 0x024F}, //      = 591
 	{0, 0x98E, 0x481D}, //Base Frame Lines (A)
-	{0, 0x990, 0x0444}, //      = 1092
+	{0, 0x990, 0x035B}, //      = 859
 	{0, 0x98E, 0x481F}, //Min Line Length (A)
 	{0, 0x990, 0x05D0}, //      = 1488
 	{0, 0x98E, 0x4825}, //Line Length (A)
-	{0, 0x990, 0x07F2}, //      = 2034
+	{0, 0x990, 0x1706}, //      = 5894
 	{0, 0x98E, 0x482B}, //Contex Width (A)
 	{0, 0x990, 0x0408}, //      = 1032
 	{0, 0x98E, 0x482D}, //Context Height (A)
 	{0, 0x990, 0x0308}, //      = 776
 	{0, 0x98E, 0xC8A5}, //search_f1_50
-	{0, 0x990, 0x23}, //      = 35
+	{0, 0x990, 0x1D}, //      = 29
 	{0, 0x98E, 0xC8A6}, //search_f2_50
-	{0, 0x990, 0x25}, //      = 37
+	{0, 0x990, 0x1F}, //      = 31
 	{0, 0x98E, 0xC8A7}, //search_f1_60
-	{0, 0x990, 0x2A}, //      = 42
+	{0, 0x990, 0x23}, //      = 35
 	{0, 0x98E, 0xC8A8}, //search_f2_60
-	{0, 0x990, 0x2C}, //      = 44
+	{0, 0x990, 0x25}, //      = 37
 	{0, 0x98E, 0xC844}, //period_50Hz (A)
-	{0, 0x990, 0xDB}, //      = 219
+	{0, 0x990, 0x6D}, //      = 109
 	{0, 0x98E, 0xC92F}, //period_50Hz (A MSB)
 	{0, 0x990, 0x00}, //      = 0
 	{0, 0x98E, 0xC845}, //period_60Hz (A)
-	{0, 0x990, 0xB6}, //      = 182
+	{0, 0x990, 0x5A}, //      = 90
 	{0, 0x98E, 0xC92D}, //period_60Hz (A MSB)
 	{0, 0x990, 0x00}, //      = 0
 	{0, 0x98E, 0xB825}, //FD Window Height
-	{0, 0x990, 0x05}, //      = 5
+	{0, 0x990, 0x03}, //      = 3
 	{0, 0x98E, 0xA009}, //Stat_min
 	{0, 0x990, 0x02}, //      = 2
 	{0, 0x98E, 0xA00A}, //Stat_max
@@ -1652,14 +1651,14 @@ struct mt9t111_regs fmt_1024x768_20fps[] = {
 	{0, 0x98E, 0x6815}, //Max FD Zone 50 Hz
 	{0, 0x990, 0x0005}, //      = 5
 	{0, 0x98E, 0x6817}, //Max FD Zone 60 Hz
-	{0, 0x990, 0x0006}, //      = 6
+	{0, 0x990, 0x0005}, //      = 5
 	{0, 0x98E, 0x682D}, //AE Target FD Zone
 	{0, 0x990, 0x0005}, //      = 5
 };
 
 struct mt9t111_regs fmt_2048x1536_5fps[] = {
  //  [CONTEXT A PARAMETERS]
- //  Requested Frames Per Second: 5.000
+ //  Requested Frames Per Second: 22.000
  //  Output Columns: 2048
  //  Output Rows: 1536
  //  JPEG: Unchecked
@@ -1671,23 +1670,23 @@ struct mt9t111_regs fmt_2048x1536_5fps[] = {
  //  Blanking Computation: HB Min then VB
  //  Min. Frame Rate: Unchecked
  // 
- //  Max Frame Time: 200 msec
- //  Max Frame Clocks: 8888888.8 clocks (44.444 MHz)
+ //  Max Frame Time: 45.4545 msec
+ //  Max Frame Clocks: 2909090.9 clocks (64 MHz)
  //  Pixel Clock: divided by 1
  //  Skip Mode: 1x cols, 1x rows, Bin Mode: No
- //  Horiz clks:  2056 active + 1889 blank = 3945 total
- //  Vert  rows:  1544 active + 709 blank = 2253 total
- //  Extra Delay: 803 clocks
+ //  Horiz clks:  2056 active + 9574 blank = 11630 total
+ //  Vert  rows:  1544 active + 85 blank = 1629 total
+ //  Extra Delay: 0 clocks
  // 
- //  Actual Frame Clocks: 8888888 clocks
- //  Row Time: 88.763 usec / 3945 clocks
- //  Frame time: 199.999980 msec
- //  Frames per Sec: 5 fps
- // 
- //  50Hz Flicker Period: 112.66 lines
- //  60Hz Flicker Period: 93.88 lines
+ //  Actual Frame Clocks: 18945270 clocks
+ //  Row Time: 181.719 usec / 11630 clocks
+ //  Frame time: 296.019844 msec
+ //  Frames per Sec: 3.378 fps   (cannot match)
+ //      (Sensor Core clock minimum: 416.796 MHz )
+ //  50Hz Flicker Period: 55.03 lines
+ //  60Hz Flicker Period: 45.86 lines
  //  RX Trigger Mark: 20
- //  OB Trigger Mark: 138
+ //  OB Trigger Mark: Error
  //  HW Rev: 3
 	{0, 0x98E, 0x6800}, //Output Width (A)
 	{0, 0x990, 0x0800}, //      = 2048
@@ -1698,13 +1697,13 @@ struct mt9t111_regs fmt_2048x1536_5fps[] = {
 	{0, 0x98E, 0x68A0}, //Adaptive Output Clock (A)
 	{0, 0x990, 0x0000, 0x0040}, //      = 0
 	{0, 0x98E, 0x4802}, //Row Start (A)
-	{0, 0x990, 0x008}, //      = 8
+	{0, 0x990, 0x004}, //      = 4
 	{0, 0x98E, 0x4804}, //Column Start (A)
-	{0, 0x990, 0x008}, //      = 8
+	{0, 0x990, 0x004}, //      = 4
 	{0, 0x98E, 0x4806}, //Row End (A)
-	{0, 0x990, 0x60F}, //      = 1551
+	{0, 0x990, 0x60B}, //      = 1547
 	{0, 0x98E, 0x4808}, //Column End (A)
-	{0, 0x990, 0x80F}, //      = 2063
+	{0, 0x990, 0x80B}, //      = 2059
 	{0, 0x98E, 0x480A}, //Row Speed (A)
 	{0, 0x990, 0x0111}, //      = 273
 	{0, 0x98E, 0x480C}, //Read Mode (A)
@@ -1716,33 +1715,33 @@ struct mt9t111_regs fmt_2048x1536_5fps[] = {
 	{0, 0x98E, 0x4813}, //Fine IT Max Margin (A)
 	{0, 0x990, 0x00FF}, //      = 255
 	{0, 0x98E, 0x481D}, //Base Frame Lines (A)
-	{0, 0x990, 0x08CD}, //      = 2253
+	{0, 0x990, 0x065D}, //      = 1629
 	{0, 0x98E, 0x481F}, //Min Line Length (A)
 	{0, 0x990, 0x0378}, //      = 888
 	{0, 0x98E, 0x4825}, //Line Length (A)
-	{0, 0x990, 0x0F69}, //      = 3945
+	{0, 0x990, 0x2D6E}, //      = 11630
 	{0, 0x98E, 0x482B}, //Contex Width (A)
 	{0, 0x990, 0x0808}, //      = 2056
 	{0, 0x98E, 0x482D}, //Context Height (A)
 	{0, 0x990, 0x0608}, //      = 1544
 	{0, 0x98E, 0xC8A5}, //search_f1_50
-	{0, 0x990, 0x1E}, //      = 30
+	{0, 0x990, 0x16}, //      = 22
 	{0, 0x98E, 0xC8A6}, //search_f2_50
-	{0, 0x990, 0x20}, //      = 32
+	{0, 0x990, 0x18}, //      = 24
 	{0, 0x98E, 0xC8A7}, //search_f1_60
-	{0, 0x990, 0x24}, //      = 36
+	{0, 0x990, 0x1A}, //      = 26
 	{0, 0x98E, 0xC8A8}, //search_f2_60
-	{0, 0x990, 0x26}, //      = 38
+	{0, 0x990, 0x1C}, //      = 28
 	{0, 0x98E, 0xC844}, //period_50Hz (A)
-	{0, 0x990, 0x71}, //      = 113
+	{0, 0x990, 0x37}, //      = 55
 	{0, 0x98E, 0xC92F}, //period_50Hz (A MSB)
 	{0, 0x990, 0x00}, //      = 0
 	{0, 0x98E, 0xC845}, //period_60Hz (A)
-	{0, 0x990, 0x5E}, //      = 94
+	{0, 0x990, 0x2E}, //      = 46
 	{0, 0x98E, 0xC92D}, //period_60Hz (A MSB)
 	{0, 0x990, 0x00}, //      = 0
 	{0, 0x98E, 0xB825}, //FD Window Height
-	{0, 0x990, 0x03}, //      = 3
+	{0, 0x990, 0x02}, //      = 2
 	{0, 0x98E, 0xA009}, //Stat_min
 	{0, 0x990, 0x02}, //      = 2
 	{0, 0x98E, 0xA00A}, //Stat_max
@@ -1752,13 +1751,13 @@ struct mt9t111_regs fmt_2048x1536_5fps[] = {
 	{0, 0x98E, 0x4846}, //RX FIFO Watermark (A)
 	{0, 0x990, 0x0014}, //      = 20
 	//{0, 0x98E, 0x68AA}, //TX FIFO Watermark (A)
-	//{0, 0x990, 0x008A}, //      = 138
+	//{0, 0x990, 0x022E}, //      = 558
 	{0, 0x98E, 0x6815}, //Max FD Zone 50 Hz
-	{0, 0x990, 0x0014}, //      = 20
+	{0, 0x990, 0x0005}, //      = 5
 	{0, 0x98E, 0x6817}, //Max FD Zone 60 Hz
-	{0, 0x990, 0x0018}, //      = 24
+	{0, 0x990, 0x0005}, //      = 5
 	{0, 0x98E, 0x682D}, //AE Target FD Zone
-	{0, 0x990, 0x0014}, //      = 20
+	{0, 0x990, 0x0005}, //      = 5
 };
 
 #endif
