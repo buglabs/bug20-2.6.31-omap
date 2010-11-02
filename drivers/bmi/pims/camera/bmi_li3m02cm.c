@@ -222,13 +222,10 @@ static ssize_t store_gpio_value(struct device *dev,
 {
 	struct bmi_li3m02cm *cam = dev_get_drvdata(dev);
 	int value, addr;
-	ssize_t status;
 	int slot = cam->bdev->slot->slotnum;
 	sscanf(buf, "%d %d", &addr, &value);
-	if (status == 0) {
-		printk(KERN_ERR "%s addr=0x%x value=0x%x\n", __func__, addr, value);
-		bmi_slot_gpio_direction_out(slot, addr, value);
-	}
+	printk(KERN_ERR "%s addr=0x%x value=0x%x\n", __func__, addr, value);
+	bmi_slot_gpio_direction_out(slot, addr, value);
 	return size;
 }
 
@@ -462,6 +459,7 @@ static int __li3m02cm_set_power(struct bmi_device *bdev, int on)
 			if(ret < 0)
 				goto error;
 			if(ret) {
+				printk(KERN_INFO "Camera SERDES locked");
 				break; // we are locked
 			} else {
 				if(retry_count++ >= 20) {
