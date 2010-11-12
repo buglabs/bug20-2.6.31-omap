@@ -459,11 +459,10 @@ static int __li3m02cm_set_power(struct bmi_device *bdev, int on)
 			if(ret < 0)
 				goto error;
 			if(ret) {
-				printk(KERN_INFO "Camera SERDES locked");
 				break; // we are locked
 			} else {
 				if(retry_count++ >= 20) {
-					printk(KERN_ERR "Camera SERDES won't lock");
+					printk(KERN_ERR "%s: Camera SERDES won't lock", __func__);
 					ret = -EBUSY;
 					goto error;
 				} else {            // if not locked,   
