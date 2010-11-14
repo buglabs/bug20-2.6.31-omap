@@ -49,6 +49,7 @@ int mt9t111_read_reg(struct i2c_client *client, u16 reg, u16 *val)
 {
 	int ret;
 	u8 data[2];
+	mdelay(5);
 	data[0] = (reg >> 8) & 0x00FF;
 	data[1] = (reg >> 0) & 0x00FF;
 	ret = i2c_master_send(client, data, 2); // send register addr first
@@ -58,7 +59,7 @@ int mt9t111_read_reg(struct i2c_client *client, u16 reg, u16 *val)
 		printk(KERN_ERR "%s: i2c_transfer() failed...%d\n", __func__, ret);
 	} else {
 		*val = ((data[0] & 0x00ff) << 8) | (data[1] & 0x00ff);	
-		//printk(KERN_DEBUG "%s: Read register 0x%x. value = 0x%x\n", __func__, reg, *val);
+		//printk(KERN_ERR "//%s: Read register 0x%x. value = 0x%x\n", __func__, reg, *val);
 	}
 	return 0;
 }
@@ -77,9 +78,10 @@ EXPORT_SYMBOL(mt9t111_read_reg);
 int mt9t111_write_reg(struct i2c_client *client, u16 reg, u16 val)
 {
 	struct i2c_msg msg[1];
-	u8 data[20];
+	u8 data[4];
 	int err;
 
+	mdelay(5);
 	msg->addr = client->addr;
 	msg->flags = 0;
 	msg->len = 4;
@@ -93,8 +95,15 @@ int mt9t111_write_reg(struct i2c_client *client, u16 reg, u16 val)
 		printk(KERN_ERR "%s error writing to addr=0x%x data=0x%x err=%d\n", __func__, reg, val, err);
 	//else
 		//printk(KERN_DEBUG "%s succeed writing to addr=0x%x data=0x%x err=%d\n", __func__, reg, val, err);
+		//printk(KERN_ERR "REG = 0x%04x, 0x%04x\n",reg, val);
 
-
+//	{ // read verify
+//		u16 rval;
+//		mt9t111_read_reg(client, reg, &rval);
+//		if(rval != val) {
+//			printk(KERN_ERR "%s *********** readback mistach addr=0x%x data=0x%x rval=0x%x\n", __func__, reg, val, rval);
+//		}		
+//	}
 	return 0;
 }
 EXPORT_SYMBOL(mt9t111_write_reg);
@@ -206,7 +215,13 @@ static int mt9t111_detect(struct i2c_client *client)
 
 static int mt9t111_refresh(struct i2c_client *client)
 {
-	return mt9t111_write_var(client, 0x8400, 0x0006); // Refresh Seq. Mode
+	int err;
+	err = mt9t111_write_var(client, 0x8400, 0x0006); // Refresh Seq. Mode
+	if(err < 0)
+		return err;
+	mdelay(500); // found a delay necessary, not sure why, though
+//	return mt9t111_write_var(client, 0x8400, 0x0005); // Refresh Seq.
+	return 0;
 }
 
 static int mt9t111_enable_pll(struct i2c_client *client)
@@ -242,6 +257,7 @@ static int mt9t111_enable_pll(struct i2c_client *client)
 	return 0;
 }
 
+#if 0
 static int mt9t111_sw_reset(struct i2c_client *client)
 {
 	int err;
@@ -258,7 +274,6 @@ static int mt9t111_sw_reset(struct i2c_client *client)
 	return 0;
 }
 
-#if 0
 static int mt9t111_soft_standby(struct i2c_client *client, int on)
 {
 	int err,i;
@@ -296,27 +311,32 @@ static int mt9t111_loaddefault(struct i2c_client *client)
 	sensor->test_pat_id = 0;
 	sensor->colorfx_id = 0;
 
-	err = mt9t111_enable_pll(client);
-	if(err < 0) 
+	if(1) {
+		err = mt9t111_enable_pll(client);
+	} else {
+		err = MT9T111_APPLY_PATCH(client, bypass_pll);
+	}
+	if(err < 0)
 		return err;
 
 	err = MT9T111_APPLY_PATCH(client, mt9t111_init_regs);
 	if(err < 0)
 		return err;
 
-	err = MT9T111_APPLY_PATCH(client, def_regs1);
-	if(err < 0)
-		return err;
-
-	err = MT9T111_APPLY_PATCH(client, patch_rev6);
-	if(err < 0)
-		return err;
-
-	err = MT9T111_APPLY_PATCH(client, def_regs2);
-	if(err < 0)
-		return err;
-
-	return mt9t111_refresh(client);
+	//err = MT9T111_APPLY_PATCH(client, def_regs1);
+	//if(err < 0)
+	//	return err;
+	//
+	//err = MT9T111_APPLY_PATCH(client, patch_rev6);
+	//if(err < 0)
+	//	return err;
+	//
+	//err = MT9T111_APPLY_PATCH(client, def_regs2);
+	//if(err < 0)
+	//	return err;
+	//
+	//return mt9t111_refresh(client);
+	return 0;
 }
 
 int mt9t111_set_power(struct i2c_client *client, int on)
@@ -324,10 +344,6 @@ int mt9t111_set_power(struct i2c_client *client, int on)
 	int ret = 0;
 	if(on) {
 		ret = mt9t111_detect(client);
-		if(ret < 0)
-			return ret;
-
-		ret = mt9t111_sw_reset(client);
 		if(ret < 0)
 			return ret;
 	}

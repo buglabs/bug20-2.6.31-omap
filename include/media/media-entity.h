@@ -44,6 +44,7 @@ struct media_entity {
 
 	const struct media_entity_operations *ops;	/* Entity operations */
 
+	int lock_count;			/* Lock count for the entity. */
 	int use_count;			/* Use count for the entity. */
 
 	union {
@@ -77,6 +78,7 @@ struct media_entity_graph {
 extern int media_entity_init(struct media_entity *entity, u8 num_pads,
 		struct media_entity_pad *pads, u8 extra_links);
 extern void media_entity_cleanup(struct media_entity *entity);
+
 extern int media_entity_create_link(struct media_entity *source, u8 source_pad,
 		struct media_entity *sink, u8 sink_pad, u32 flags);
 extern int __media_entity_setup_link(struct media_entity_link *link, u32 flags);
@@ -93,6 +95,8 @@ void media_entity_graph_walk_start(struct media_entity_graph *graph,
 				   struct media_entity *entity);
 struct media_entity *
 media_entity_graph_walk_next(struct media_entity_graph *graph);
+void media_entity_graph_lock(struct media_entity *entity);
+void media_entity_graph_unlock(struct media_entity *entity);
 
 #define media_entity_call(entity, operation, args...)			\
 	(((entity)->ops && (entity)->ops->operation) ?			\

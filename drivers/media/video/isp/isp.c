@@ -983,7 +983,7 @@ static int isp_enable_clocks(struct isp_device *isp)
 	r = clk_set_rate(isp->clock[ISP_CLK_DPLL4_M5_CK],
 			 CM_CAM_MCLK_HZ/divisor);
 	if (r) {
-		dev_err(isp->dev, "clk_set_rate for dpll4_m5_ck failed\n");
+		//dev_err(isp->dev, "clk_set_rate for dpll4_m5_ck failed\n");
 		//goto out_clk_enable_mclk;
 	}
 	r = clk_enable(isp->clock[ISP_CLK_CAM_MCLK]);
@@ -992,10 +992,10 @@ static int isp_enable_clocks(struct isp_device *isp)
 		goto out_clk_enable_mclk;
 	}
 	rate = clk_get_rate(isp->clock[ISP_CLK_CAM_MCLK]);
-	if (rate != CM_CAM_MCLK_HZ)
-		dev_warn(isp->dev, "unexpected cam_mclk rate:\n"
-				   " expected : %d\n"
-				   " actual   : %ld\n", CM_CAM_MCLK_HZ, rate);
+//	if (rate != CM_CAM_MCLK_HZ)
+//		dev_warn(isp->dev, "unexpected cam_mclk rate:\n"
+//				   " expected : %d\n"
+//				   " actual   : %ld\n", CM_CAM_MCLK_HZ, rate);
 	r = clk_enable(isp->clock[ISP_CLK_CSI2_FCK]);
 	if (r) {
 		dev_err(isp->dev, "clk_enable csi2_fck failed\n");

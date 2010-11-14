@@ -1,6 +1,8 @@
 #ifndef __LINUX_MEDIA_H
 #define __LINUX_MEDIA_H
 
+#include <linux/types.h>
+
 #define MEDIA_ENTITY_TYPE_NODE		1
 #define MEDIA_ENTITY_TYPE_SUBDEV	2
 
