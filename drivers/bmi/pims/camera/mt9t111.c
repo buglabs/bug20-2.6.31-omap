@@ -336,6 +336,7 @@ static int mt9t111_loaddefault(struct i2c_client *client)
 	//	return err;
 	//
 	//return mt9t111_refresh(client);
+	sensor->format.width = sensor->format.height = 1;
 	return 0;
 }
 
@@ -412,6 +413,13 @@ int mt9t111_set_format(struct i2c_client *client, struct v4l2_mbus_framefmt *fmt
 {
 	int ret;
 	struct mt9t111_sensor *sensor = i2c_get_clientdata(client);
+
+	if(sensor->format.width  == fmt->width  &&
+	   sensor->format.height == fmt->height &&
+	   sensor->format.code   == fmt->code) {
+		printk(KERN_INFO "%s: Sensor already in requested format (%dx%d).\n", __func__, fmt->width, fmt->height);
+		return 0;
+	}
 
 	// clamp width and height to multiples of 16
 	fmt->width  = (fmt->width  / 16) * 16;
@@ -914,16 +922,16 @@ static int mt9t111_probe(struct i2c_client *client,
 
 	i2c_set_clientdata(client, sensor);
 	sensor->client = client;
-	sensor->format.width        = 640;
-	sensor->format.height       = 480;
+	sensor->format.width        = 1;
+	sensor->format.height       = 1;
 	sensor->format.code         = V4L2_MBUS_FMT_YUYV16_1X16;
 	sensor->format.colorspace   = V4L2_COLORSPACE_SRGB;
 	sensor->format.field        = V4L2_FIELD_NONE;
 	sensor->frame_interval.numerator = 1;
 	sensor->frame_interval.denominator= 22;
 	sensor->test_pat_id = 0;
-	sensor->colorfx_id = 0;
-	sensor->streaming = 0;
+	sensor->colorfx_id  = 0;
+	sensor->streaming   = 0;
 	return 0;
 }
 
