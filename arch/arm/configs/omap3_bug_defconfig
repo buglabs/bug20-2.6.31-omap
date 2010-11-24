@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # Linux kernel version: 2.6.31-omap1
-# Wed Oct 13 18:16:23 2010
+# Fri Oct 29 19:43:03 2010
 #
 CONFIG_ARM=y
 CONFIG_HAVE_PWM=y
@@ -760,6 +760,7 @@ CONFIG_MISC_DEVICES=y
 # CONFIG_ENCLOSURE_SERVICES is not set
 # CONFIG_ISL29003 is not set
 CONFIG_BUG_DOCK=y
+CONFIG_BUG_BQSIG=y
 # CONFIG_C2PORT is not set
 
 #
