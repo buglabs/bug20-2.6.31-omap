@@ -105,6 +105,7 @@ struct isp_video_fh {
 	struct isp_video *video;
 	struct isp_video_queue queue;
 	struct v4l2_format format;
+	struct v4l2_fract timeperframe;
 };
 
 #define to_isp_video_fh(fh)	container_of(fh, struct isp_video_fh, vfh)
