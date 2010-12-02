@@ -1258,6 +1258,7 @@ static void ispccdc_isr_buffer(struct isp_ccdc_device *ccdc)
 	ispccdc_enable(ccdc, 0);
 	if (ispccdc_sbl_wait_idle(ccdc, 1000)) {
 		dev_info(isp->dev, "CCDC won't become idle!\n");
+		isp_reset_then_restore(isp);
 		goto done;
 	}
 
@@ -1533,7 +1534,10 @@ static int ccdc_set_stream(struct v4l2_subdev *sd, int enable)
 	case ISP_PIPELINE_STREAM_STOPPED:
 		ispccdc_enable(ccdc, 0);
 		if (ccdc->output & CCDC_OUTPUT_MEMORY) {
-			__ispccdc_stop(ccdc);
+			int ret;
+			ret = __ispccdc_stop(ccdc);
+			if(ret < 0)
+				isp_reset_then_restore(isp);
 			isp_sbl_disable(isp, OMAP3_ISP_SBL_CCDC_WRITE);
 		}
 		isp_reg_and(isp, OMAP3_ISP_IOMEM_MAIN, ISP_CTRL,

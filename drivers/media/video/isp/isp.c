@@ -878,6 +878,12 @@ static void isp_restore_ctx(struct isp_device *isp)
 	ispresizer_restore_context(isp);
 }
 
+void isp_reset_then_restore(struct isp_device *isp) {
+	isp_save_ctx(isp);
+	isp_reset(isp);
+	isp_restore_ctx(isp);
+}
+
 /* -----------------------------------------------------------------------------
  * SBL resources management
  */

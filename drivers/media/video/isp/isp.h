@@ -307,6 +307,7 @@ void isp_sbl_disable(struct isp_device *isp, enum isp_sbl_resource res);
 int omap3isp_register_entities(struct platform_device *pdev,
 			       struct v4l2_device *v4l2_dev);
 void omap3isp_unregister_entities(struct platform_device *pdev);
+void isp_reset_then_restore(struct isp_device *isp);
 
 /*
  * isp_reg_readl - Read value of an OMAP3 ISP register
