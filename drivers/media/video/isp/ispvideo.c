@@ -973,6 +973,88 @@ isp_video_s_input(struct file *file, void *fh, unsigned int input)
 	return input == 0 ? 0 : -EINVAL;
 }
 
+static int 
+isp_video_enum_format(struct file *file, void *fh, struct v4l2_fmtdesc *f) 
+{
+	struct isp_video_fh *vfh = to_isp_video_fh(fh);
+	struct isp_video *video = video_drvdata(file);
+
+	if (f->index > 0 || f->type != video->type)
+		return -EINVAL;
+
+	mutex_lock(&video->mutex);
+	f->flags       = 0;
+	f->pixelformat = vfh->format.fmt.pix.pixelformat;
+	mutex_unlock(&video->mutex);
+	return 0;
+}
+
+static int
+isp_video_enum_framesizes(struct file *file, void *fh, 
+			  struct v4l2_frmsizeenum *f)
+{
+	int ret = 0;
+	struct isp_video_fh *vfh = to_isp_video_fh(fh);
+	struct isp_video *video = video_drvdata(file);
+
+	if (f->index > 0)
+		return -EINVAL;
+
+	mutex_lock(&video->mutex);
+	if (f->pixel_format == vfh->format.fmt.pix.pixelformat) {
+		f->type = V4L2_FRMSIZE_TYPE_DISCRETE;
+		f->discrete.width  = vfh->format.fmt.pix.width;
+		f->discrete.height = vfh->format.fmt.pix.height;
+	} else {
+		ret = -EINVAL;
+	}
+	mutex_unlock(&video->mutex);
+	return 0;
+}
+
+static int
+isp_video_enum_ivals(struct file *file, void *fh, struct v4l2_frmivalenum *f)
+{
+	int ret = 0;
+	struct isp_video_fh *vfh = to_isp_video_fh(fh);
+	struct isp_video *video = video_drvdata(file);
+
+	if (f->index > 0)
+		return -EINVAL;
+
+	mutex_lock(&video->mutex);
+	if(f->pixel_format == vfh->format.fmt.pix.pixelformat &&
+	   f->width        == vfh->format.fmt.pix.width &&
+	   f->height       == vfh->format.fmt.pix.height) {
+		f->type = V4L2_FRMIVAL_TYPE_DISCRETE;
+		f->discrete.numerator   = vfh->timeperframe.numerator;
+		f->discrete.denominator = vfh->timeperframe.denominator;
+	} else {
+		ret = -EINVAL;
+	}
+	mutex_unlock(&video->mutex);
+	return ret;
+}
+
+
+static int 
+isp_video_g_parm(struct file *file, void *fh, struct v4l2_streamparm *a) {
+	struct isp_video_fh *vfh = to_isp_video_fh(fh);
+	struct isp_video *video = video_drvdata(file);
+
+	if (a->type != video->type)
+		return -EINVAL;
+
+	if(a->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
+		return -EINVAL;
+
+	mutex_lock(&video->mutex);
+	a->parm.capture.timeperframe.numerator   =vfh->timeperframe.numerator;
+	a->parm.capture.timeperframe.denominator =vfh->timeperframe.denominator;
+	mutex_unlock(&video->mutex);
+	return 0;
+}
+
 static const struct v4l2_ioctl_ops isp_video_ioctl_ops = {
 	.vidioc_querycap		= isp_video_querycap,
 	.vidioc_g_fmt_vid_cap		= isp_video_get_format,
@@ -993,16 +1075,56 @@ static const struct v4l2_ioctl_ops isp_video_ioctl_ops = {
 	.vidioc_enum_input		= isp_video_enum_input,
 	.vidioc_g_input			= isp_video_g_input,
 	.vidioc_s_input			= isp_video_s_input,
+	.vidioc_g_parm                  = isp_video_g_parm,
+	.vidioc_enum_fmt_vid_cap        = isp_video_enum_format,
+	.vidioc_enum_frameintervals     = isp_video_enum_ivals,
+	.vidioc_enum_framesizes         = isp_video_enum_framesizes,
 };
 
 /* -----------------------------------------------------------------------------
  * V4L2 file operations
  */
 
+static int __find_timeperframe(struct media_entity_pad *pad, 
+			       struct v4l2_subdev *subdev,
+			       struct v4l2_subdev_frame_interval *fi,
+			       int depth) {
+	int err;
+	unsigned int i;
+	if(depth > 16) /* max depth. if this is reached, then bail the search */
+		return -EINVAL;
+
+	err = v4l2_subdev_call(subdev, video, g_frame_interval, fi);
+	if(err < 0) {
+		/* Trace backwards through the pipeline to find a subdev
+		   with the frame interval set. */
+		struct media_entity_pad *_pad;
+		struct v4l2_subdev *_subdev;
+		for(i=0; i<pad->entity->num_pads; ++i) {
+			_pad = pad->entity->pads + i;
+			if(i==pad->index || _pad->type != MEDIA_PAD_TYPE_INPUT) 
+				continue;
+			_pad = media_entity_remote_pad(_pad);
+			if(!_pad || _pad->entity->type != MEDIA_ENTITY_TYPE_SUBDEV)
+				continue;
+			_subdev = media_entity_to_v4l2_subdev(_pad->entity);
+			err = __find_timeperframe(_pad, _subdev, fi, depth+1);
+			if(err < 0)
+				continue;
+			else
+				return err;
+		}
+		return -EINVAL; /* search failed to find any frame intervals */
+	} else {
+		return err;
+	}
+}
+
 static int isp_video_open(struct file *file)
 {
 	struct isp_video *video = video_drvdata(file);
 	struct isp_video_fh *handle;
+	struct media_entity_pad *pad;
 	int ret = 0;
 
 	handle = kzalloc(sizeof(*handle), GFP_KERNEL);
@@ -1025,6 +1147,31 @@ static int isp_video_open(struct file *file)
 
 	memset(&handle->format, 0, sizeof(handle->format));
 	handle->format.type = video->type;
+	handle->timeperframe.denominator = 1;
+
+	/* If a subdev is linked to this dev, then initialize the
+	   format to match the subdev. */
+	pad = media_entity_remote_pad(&video->pad);
+	if(pad && pad->entity->type == MEDIA_ENTITY_TYPE_SUBDEV) {
+		struct v4l2_subdev *subdev;
+		struct v4l2_mbus_framefmt fmt_source;
+		struct v4l2_subdev_frame_interval fi;
+		int err;
+		subdev = media_entity_to_v4l2_subdev(pad->entity);
+		err = v4l2_subdev_call(subdev, pad, get_fmt, NULL, pad->index,
+				       &fmt_source, V4L2_SUBDEV_FORMAT_ACTIVE);
+		if(err >= 0) {
+			isp_video_mbus_to_pix(video, &fmt_source, &(handle->format.fmt.pix));
+			handle->format.fmt.pix.width = fmt_source.width;
+			handle->format.fmt.pix.height= fmt_source.height;
+		}
+
+		err = __find_timeperframe(pad, subdev, &fi, 0);
+		if(err >= 0) {
+			handle->timeperframe.numerator = fi.interval.numerator;
+			handle->timeperframe.denominator = fi.interval.denominator;
+		}
+	}
 
 	handle->video = video;
 	file->private_data = &handle->vfh;
