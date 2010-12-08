@@ -688,6 +688,10 @@ static int isp_pipeline_disable(struct isp_device *isp, struct isp_video *video)
 
 		if (subdev == &isp->isp_res.subdev) {
 			ret = isp_pipeline_wait(isp, isp_pipeline_wait_resizer);
+			if(ret) {
+				isp_reset_then_restore(isp);
+				ret = isp_pipeline_wait(isp, isp_pipeline_wait_resizer);
+			}
 		} else if (subdev == &isp->isp_prev.subdev) {
 			ret = isp_pipeline_wait(isp, isp_pipeline_wait_preview);
 		} else if (subdev == &isp->isp_ccdc.subdev) {
@@ -698,12 +702,18 @@ static int isp_pipeline_disable(struct isp_device *isp, struct isp_video *video)
 			v4l2_subdev_call(&isp->isp_hist.subdev,
 					 video, s_stream, 0);
 			ret = isp_pipeline_wait(isp, isp_pipeline_wait_ccdc);
+			if(ret) {
+				isp_reset_then_restore(isp);
+				ret = isp_pipeline_wait(isp, isp_pipeline_wait_ccdc);
+			}
+
 		} else {
 			ret = 0;
 		}
 
 		if (ret) {
 			dev_info(isp->dev, "Unable to stop %s\n", subdev->name);
+			isp_reset_then_restore(isp);
 			failure = -ETIMEDOUT;
 		}
 	}
@@ -879,6 +889,7 @@ static void isp_restore_ctx(struct isp_device *isp)
 }
 
 void isp_reset_then_restore(struct isp_device *isp) {
+	printk(KERN_ERR "%s reseting ISP", __func__);
 	isp_save_ctx(isp);
 	isp_reset(isp);
 	isp_restore_ctx(isp);
