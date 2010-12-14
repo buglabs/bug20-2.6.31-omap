@@ -1386,6 +1386,12 @@ struct mt9t111_regs mt9t111_init_regs[] = {
 
 	{0, 0x098E, 0x480C}, // these are necessary to get FV and LV running
 	{0, 0x0990, 0x046C}, // when the part is coming out of reset
+
+	// these help the FPN in low light
+	{0, 0x098E, 0x6839},
+	{0, 0x0990, 150 }, // lower max analog gain
+	{0, 0x098E, 0x6835},
+	{0, 0x0990, 256 }, // raise max digital gain 
 };
 
 struct mt9t111_regs fmt_GBRG_regs[] = {
@@ -1754,11 +1760,11 @@ struct mt9t111_regs fmt_2048x1536_5fps[] = {
 	{0, 0x98E, 0x68AA}, //TX FIFO Watermark (A)
 	{0, 0x990, 0x008A}, //      = 138
 	{0, 0x98E, 0x6815}, //Max FD Zone 50 Hz
-	{0, 0x990, 0x000E}, //      = 14
+	{0, 0x990, 0x0004}, //      = 4
 	{0, 0x98E, 0x6817}, //Max FD Zone 60 Hz
-	{0, 0x990, 0x0011}, //      = 17
+	{0, 0x990, 0x0005}, //      = 5
 	{0, 0x98E, 0x682D}, //AE Target FD Zone
-	{0, 0x990, 0x000E}, //      = 14
+	{0, 0x990, 0x0004}, //      = 4
 };
 
 
