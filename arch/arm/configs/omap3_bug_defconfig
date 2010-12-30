@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # Linux kernel version: 2.6.31-omap1
-# Fri Oct 29 19:43:03 2010
+# Thu Dec 30 14:30:58 2010
 #
 CONFIG_ARM=y
 CONFIG_HAVE_PWM=y
@@ -1650,7 +1650,7 @@ CONFIG_USB_SERIAL_SIERRAWIRELESS=m
 # CONFIG_USB_SERIAL_TI is not set
 # CONFIG_USB_SERIAL_CYBERJACK is not set
 # CONFIG_USB_SERIAL_XIRCOM is not set
-# CONFIG_USB_SERIAL_OPTION is not set
+CONFIG_USB_SERIAL_OPTION=m
 # CONFIG_USB_SERIAL_OMNINET is not set
 # CONFIG_USB_SERIAL_OPTICON is not set
 CONFIG_USB_SERIAL_DEBUG=m
