@@ -253,7 +253,7 @@ static struct i2c_board_info __initdata omap3bug_i2c2_boardinfo[] = {
 	  .platform_data = &omap3bug_ioexp_data,
 	},
 	{
-	  I2C_BOARD_INFO("bq27200", 0x55),
+	  I2C_BOARD_INFO("bq27500", 0x55),
 	},
 };
 
@@ -788,7 +788,7 @@ static struct twl4030_hsmmc_info mmc[] __initdata = {
 		.mmc		= 1,
 		.wires		= 4,
 		.gpio_cd	= -EINVAL,
-		.gpio_wp	= 63,
+		.gpio_wp	= -EINVAL,
 	},
 	{
 	  .mmc = 2,
