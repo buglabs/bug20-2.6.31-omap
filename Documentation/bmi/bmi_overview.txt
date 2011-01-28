@@ -1,0 +1,32 @@
+INTRODUCTION
+
+	BMI is the Bug Module Interface. This is a hardware standard for low
+	power plug and play devices. It's a bit like USB, but with lower power
+	requirements for mobile/embedded/battery-powered Devices. 
+
+
+DESIGN OVERVIEW
+	
+	BMI is composed of slots and PIMs (Plug In Modules). Slots are the
+	abstraction for the physical slots on a machine (bug board for this
+	version) PIM's Slot drivers are platform specific, and some devices
+	are slot limited such that a high baud video device may have only a
+	few select slots that it will work in. 
+
+	PIM's are intended to work on any platform supporting the BMI, 
+	regardless of the underlying platform, as long as the slot provides
+	the required features of the PIM.
+	
+	As a bare minimum a BMI slot needs to provide and I2C connection, as
+	well as 2 IRQ pins to register the insertion and removal of modules.
+
+BMI BOOT PROCESS
+	The core BMI module is loaded as a bus driver as compiled-in kernel 
+	module (see drivers/bmi/core/ ) During boot BMI is loaded and runs, 
+	and slots are regiestered as bus items.  Then modules are detected and
+	loaded individually depending on what module info was detected. 
+	
+	Modules can alternately be loaded at run-time when they are detected by
+	a change on a slots IRQ. 
+
+
