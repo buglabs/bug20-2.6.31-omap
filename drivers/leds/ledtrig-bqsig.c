@@ -219,7 +219,7 @@ static void __exit bug_bqsig_exit(void)
   platform_device_unregister(bug_bqsig_dev);
 }
 
-module_init(bug_bqsig_init);
+subsys_initcall(bug_bqsig_init);
 module_exit(bug_bqsig_exit);
 
 MODULE_AUTHOR("Dave R");
