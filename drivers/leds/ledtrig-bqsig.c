@@ -61,8 +61,8 @@ static void irq_handler_work(struct work_struct *work)
 		printk(KERN_INFO "WARNING: Low Battery!\n");
 	}
 	else {
-		led_trigger_event(bqsig->batt_normal_trig, LED_OFF);
-		led_trigger_event(bqsig->batt_low_trig, LED_FULL);
+		led_trigger_event(bqsig->batt_normal_trig, LED_FULL);
+		led_trigger_event(bqsig->batt_low_trig, LED_OFF);
 		printk(KERN_INFO "WARNING: Battery Level Safe\n");
 	}
 }
