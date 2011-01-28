@@ -21,6 +21,5 @@ obj-$(CONFIG_HP_ILO)		+= hpilo.o
 obj-$(CONFIG_ISL29003)		+= isl29003.o
 obj-$(CONFIG_C2PORT)		+= c2port/
 obj-$(CONFIG_BUG_DOCK)		+= bug_dock.o
-obj-$(CONFIG_BUG_BQSIG)		+= bug_bqsig.o
 obj-y				+= eeprom/
 obj-y				+= cb710/

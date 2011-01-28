@@ -24,12 +24,16 @@
 #include <linux/interrupt.h>
 #include <mach/mux.h>
 #include <linux/bmi.h>
+#include <linux/leds.h>
+#include "leds.h"
 
 #define BATT_LOW_GPIO      64
 
 struct bqsig_device {
         struct platform_device  *pdev;
         struct work_struct       irq_handler_work;
+	struct led_trigger	*batt_low_trig;
+	struct led_trigger	*batt_normal_trig;
 };
 
 static struct platform_device *bug_bqsig_dev;
@@ -46,16 +50,20 @@ static inline struct bqsig_device *irq_handler_work_to_bqsig_device(struct work_
 static void irq_handler_work(struct work_struct *work)
 {
         bool value;
-  	//struct bqsig_device *bq_signal = irq_handler_work_to_bqsig_device(work);
+  	struct bqsig_device *bqsig = container_of(work, struct bqsig_device, irq_handler_work);
 	
 	value = gpio_get_value(BATT_LOW_GPIO);
 
 	//asserted 
 	if (value) {
-	  printk(KERN_INFO "WARNING: Low Battery!\n");
+		led_trigger_event(bqsig->batt_normal_trig, LED_OFF);
+		led_trigger_event(bqsig->batt_low_trig, LED_FULL);
+		printk(KERN_INFO "WARNING: Low Battery!\n");
 	}
 	else {
-	  printk(KERN_INFO "WARNING: Battery Level Safe\n");
+		led_trigger_event(bqsig->batt_normal_trig, LED_OFF);
+		led_trigger_event(bqsig->batt_low_trig, LED_FULL);
+		printk(KERN_INFO "WARNING: Battery Level Safe\n");
 	}
 }
 
@@ -68,6 +76,45 @@ static irqreturn_t bqsig_irq_handler(int irq, void *dev_id)
   struct bqsig_device *bq_signal = dev_id;
   schedule_work(&bq_signal->irq_handler_work);
   return IRQ_HANDLED;
+}
+
+static void bqsig_low_trig_activate(struct led_classdev *led)
+{	
+	bool value;
+
+	value = gpio_get_value(BATT_LOW_GPIO);
+	
+	if (value)
+		led_set_brightness(led, LED_FULL);
+	else
+		led_set_brightness(led, LED_OFF);
+
+	return;
+}
+
+static void bqsig_low_trig_deactivate(struct led_classdev *led)
+{
+	led_set_brightness(led, LED_OFF);
+	return;
+}
+
+static void bqsig_normal_trig_activate(struct led_classdev *led)
+{
+	bool value;
+
+	value = gpio_get_value(BATT_LOW_GPIO);
+	
+	if (value)
+		led_set_brightness(led, LED_OFF);
+	else
+		led_set_brightness(led, LED_FULL);
+	return;
+}
+
+static void bqsig_normal_trig_deactivate(struct led_classdev *led)
+{
+	led_set_brightness(led, LED_OFF);
+	return;
 }
 
 /*
@@ -106,6 +153,18 @@ static int bug_bqsig_probe(struct platform_device *pdev)
 	        printk(KERN_ERR "bq_signal: error during probe...\n");
 		return -EINVAL;
 	}
+
+	led_trigger_register_simple("batt-low", &bq_signal->batt_low_trig);
+	led_trigger_register_simple("batt-normal", &bq_signal->batt_normal_trig);
+	
+	if (bq_signal->batt_low_trig && bq_signal->batt_normal_trig) {
+		bq_signal->batt_low_trig->activate = bqsig_low_trig_activate;
+		bq_signal->batt_low_trig->deactivate = bqsig_low_trig_deactivate;
+		bq_signal->batt_normal_trig->activate = bqsig_normal_trig_activate;
+		bq_signal->batt_normal_trig->deactivate = bqsig_normal_trig_deactivate;
+	}
+	else
+		printk(KERN_ERR "%s led triggers failed to register...\n", __FUNCTION__);
 
 	printk(KERN_INFO "bug_bqsig: bug_bqsig_probe...\n");
 	return 0;
