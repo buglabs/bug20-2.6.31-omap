@@ -605,14 +605,14 @@ static void __init omap3_bug_init_irq(void)
 static struct gpio_led gpio_leds[] = {
 		{
 			.name		    = "omap3bug:green:battery",
-			.default_trigger    = "none",
+			.default_trigger    = "batt-normal",
 			.gpio		    = 53,
 			.active_low         = true,
 			.default_state      = LEDS_GPIO_DEFSTATE_OFF,
 		},
 		{
 			.name		    = "omap3bug:red:battery",
-			.default_trigger    = "none",
+			.default_trigger    = "batt-low",
 			.gpio		    = 54,
 			.active_low         = true,
 			.default_state      = LEDS_GPIO_DEFSTATE_OFF,
