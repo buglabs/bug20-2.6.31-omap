@@ -287,6 +287,10 @@ struct lbs_private {
 	u8 wpa_ie[MAX_WPA_IE_LEN];
 	u8 wpa_ie_len;
 
+	struct led_trigger *assoc_led;
+	char assoc_led_name[32];
+	struct led_trigger *radio_led;
+	char radio_led_name[32];
 	/** Requested Signal Strength*/
 	u16 SNR[MAX_TYPE_B][MAX_TYPE_AVG];
 	u16 NF[MAX_TYPE_B][MAX_TYPE_AVG];

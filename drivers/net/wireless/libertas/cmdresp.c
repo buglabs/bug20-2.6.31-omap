@@ -14,6 +14,7 @@
 #include "dev.h"
 #include "assoc.h"
 #include "wext.h"
+#include "led.h"
 
 /**
  *  @brief This function handles disconnect event. it
@@ -61,7 +62,7 @@ void lbs_mac_event_disconnected(struct lbs_private *priv)
 	priv->nextSNRNF = 0;
 	priv->numSNRNF = 0;
 	priv->connect_status = LBS_DISCONNECTED;
-
+	lbs_led_assoc(priv, 0);
 	/* Clear out associated SSID and BSSID since connection is
 	 * no longer valid.
 	 */

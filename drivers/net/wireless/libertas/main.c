@@ -23,6 +23,7 @@
 #include "scan.h"
 #include "assoc.h"
 #include "cmd.h"
+#include "led.h"
 
 #define DRIVER_RELEASE_VERSION "323.p0"
 const char lbs_driver_version[] = "COMM-USB8388-" DRIVER_RELEASE_VERSION
@@ -1356,6 +1357,7 @@ int lbs_start_card(struct lbs_private *priv)
 	}
 
 	lbs_debugfs_init_one(priv, dev);
+	lbs_led_init(priv);
 
 	lbs_pr_info("%s: Marvell WLAN 802.11 adapter\n", dev->name);
 

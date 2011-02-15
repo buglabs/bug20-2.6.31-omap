@@ -14,6 +14,7 @@
 #include "assoc.h"
 #include "wext.h"
 #include "cmd.h"
+#include "led.h"
 
 static struct cmd_ctrl_node *lbs_get_cmd_ctrl_node(struct lbs_private *priv);
 
@@ -1332,7 +1333,7 @@ int lbs_set_radio(struct lbs_private *priv, u8 preamble, u8 radio_on)
 		    radio_on ? "ON" : "OFF", preamble);
 
 	priv->radio_on = radio_on;
-
+	lbs_led_radio(priv);
 	ret = lbs_cmd_with_response(priv, CMD_802_11_RADIO_CONTROL, &cmd);
 
 out:
