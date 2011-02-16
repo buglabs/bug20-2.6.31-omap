@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # Linux kernel version: 2.6.31-omap1
-# Fri Jan 28 14:51:18 2011
+# Wed Feb 16 12:22:06 2011
 #
 CONFIG_ARM=y
 CONFIG_HAVE_PWM=y
@@ -1672,7 +1672,7 @@ CONFIG_USB_SERIAL_DEBUG=m
 # CONFIG_USB_FTDI_ELAN is not set
 # CONFIG_USB_APPLEDISPLAY is not set
 # CONFIG_USB_SISUSBVGA is not set
-# CONFIG_USB_LD is not set
+CONFIG_USB_LD=m
 # CONFIG_USB_TRANCEVIBRATOR is not set
 # CONFIG_USB_IOWARRIOR is not set
 # CONFIG_USB_TEST is not set
